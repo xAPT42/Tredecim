@@ -1,4 +1,4 @@
-/* TREDECIM — ledger palette.
+/* TREDECIM, ledger palette.
    A register never deletes an entry: it rules it through and posts the correction
    beneath. The interface borrows that, so the mechanism is legible without a caption. */
 
@@ -451,7 +451,7 @@ a.link-quiet { text-decoration: underline; text-underline-offset: 3px; }
 
 /* ── focus ─────────────────────────────────────────────────────────────── */
 /* Guiding attention is subtraction. During a tour step, everything the step is not
-   talking about recedes far enough to stop competing, without disappearing — a reader
+   talking about recedes far enough to stop competing, without disappearing, a reader
    who wants to look anyway still can. */
 .dimmed {
   opacity: .22;

@@ -1,8 +1,8 @@
--- TREDECIM — bitemporal agent memory
+-- TREDECIM, bitemporal agent memory
 --
 -- Two temporal axes:
---   valid time       — when the fact is true in the world (modelled here)
---   transaction time — when the system learned it (recorded_at + MVCC / AS OF SYSTEM TIME)
+--   valid time     , when the fact is true in the world (modelled here)
+--   transaction time, when the system learned it (recorded_at + MVCC / AS OF SYSTEM TIME)
 --
 -- Embeddings live on the fact rows themselves, not in a separate store. That is the
 -- point: semantic recall and temporal validity are enforced by the same engine, in the
@@ -84,7 +84,7 @@ CREATE INDEX IF NOT EXISTS facts_valid_window
 --      An index left at the default is built, listed by SHOW INDEXES, and never chosen.
 --
 --   2. A full index is not usable under the `valid_to IS NULL` predicate that every live
---      recall carries — the filter alone was enough to send the planner back to a scan.
+--      recall carries, the filter alone was enough to send the planner back to a scan.
 --      Restricting the index to the same predicate is what makes it applicable.
 --
 -- The restriction is not a workaround, it is the right shape: only open facts are ever
@@ -154,7 +154,7 @@ CREATE INDEX IF NOT EXISTS tx_journal_recent
 --
 -- The journal is observability: a week of it answers every question anyone asks of it, and
 -- nothing in the system reads a row older than that. Expiring it is straightforwardly
--- correct, and CockroachDB does the work — no scheduled cleanup job to write, monitor and
+-- correct, and CockroachDB does the work, no scheduled cleanup job to write, monitor and
 -- forget about.
 --
 -- `facts` gets no TTL. Retaining every superseded interval is the whole claim, and the

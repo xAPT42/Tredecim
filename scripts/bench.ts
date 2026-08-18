@@ -1,5 +1,5 @@
 /**
- * TREDECIM benchmark — what the memory layer actually costs, against a live cluster.
+ * TREDECIM benchmark, what the memory layer actually costs, against a live cluster.
  *
  *   npx tsx --env-file=.env.local scripts/bench.ts
  *
@@ -81,7 +81,7 @@ async function timed<T>(fn: () => Promise<T>): Promise<[T, number]> {
   return [value, performance.now() - started]
 }
 
-/** "23514 x5, 40001 x2" — distinct values with their counts. */
+/** "23514 x5, 40001 x2", distinct values with their counts. */
 function tally(xs: string[], format: (x: string) => string = (x) => x): string {
   return [...new Set(xs)].map((x) => `${format(x)} x${xs.filter((y) => y === x).length}`).join(', ')
 }
@@ -153,7 +153,7 @@ const RUN_STARTED = performance.now()
 // A revision is a close and an open in one serializable transaction. This is the number
 // an agent pays on every decision it commits to memory.
 async function benchWrites() {
-  console.log(`\n[1] Write latency — ${WRITE_OPS} fact revisions (close + open, one transaction)`)
+  console.log(`\n[1] Write latency, ${WRITE_OPS} fact revisions (close + open, one transaction)`)
 
   for (let i = 0; i < 5; i++) {
     await memory.assertFact(ENTITY.write, KEY.write, i, `warm up revision ${i}`)
@@ -166,8 +166,7 @@ async function benchWrites() {
   for (let i = 0; i < WRITE_OPS; i++) {
     const [res, elapsed] = await timed(() =>
       memory.assertFact(ENTITY.write, KEY.write, `FR76${1000 + i}`,
-        `Destination account is FR76 ${1000 + i}`),
-    )
+        `Destination account is FR76 ${1000 + i}`))
     wall.push(elapsed)
     commit.push(res.latencyMs)
     retries += res.retries
@@ -186,13 +185,12 @@ async function benchWrites() {
 // ── 2 ────────────────────────────────────────────────────────────────────────
 // Valid-time travel over the history the write benchmark just produced.
 async function benchPointInTime() {
-  console.log(`\n[2] Point-in-time read latency — ${READ_OPS} recallAt over that history`)
+  console.log(`\n[2] Point-in-time read latency, ${READ_OPS} recallAt over that history`)
 
   const span = await db.pool.query<{ lo: Date; hi: Date; n: number }>(
     `SELECT min(valid_from) AS lo, max(valid_from) AS hi, count(*)::INT AS n
        FROM facts WHERE entity_id = $1`,
-    [ENTITY.write],
-  )
+    [ENTITY.write])
   const { lo, hi, n } = span.rows[0]
   if (!n) {
     console.log('      skipped: no write history to read (run the writes section first)')
@@ -235,9 +233,7 @@ async function benchContention() {
     const settled = await Promise.allSettled(
       Array.from({ length: writers }, (_, i) =>
         memory.assertFact(ENTITY.contend, key, `w${i}`,
-          `Destination account is FR76 writer ${i} of ${writers}`),
-      ),
-    )
+          `Destination account is FR76 writer ${i} of ${writers}`)))
     const wallMs = performance.now() - started
 
     const codes = settled
@@ -246,20 +242,18 @@ async function benchContention() {
     const journal = await db.pool.query<{ status: string; n: number }>(
       `SELECT status, count(*)::INT AS n FROM tx_journal
         WHERE label = $1 AND at >= $2 GROUP BY status`,
-      [`assert:${key}`, mark],
-    )
+      [`assert:${key}`, mark])
     const open = await db.pool.query<{ n: number }>(
       `SELECT count(*)::INT AS n FROM facts
         WHERE entity_id = $1 AND key = $2 AND valid_to IS NULL`,
-      [ENTITY.contend, key],
-    )
+      [ENTITY.contend, key])
 
     const row: ContentionRow = {
       writers,
       committed: settled.filter((s) => s.status === 'fulfilled').length,
       refused: codes.length,
       retries: journal.rows.find((r) => r.status === 'retry')?.n ?? 0,
-      codes: codes.length ? tally(codes, (c) => `\`${c}\``) : '—',
+      codes: codes.length ? tally(codes, (c) => `\`${c}\``) : ', ',
       rawCodes: codes,
       wallMs,
       openIntervals: open.rows[0].n,
@@ -267,8 +261,7 @@ async function benchContention() {
     results.contention.push(row)
     console.log(
       `      N=${String(writers).padStart(2)}  committed ${row.committed}  refused ${row.refused}` +
-      `  retries ${row.retries}  wall ${ms(wallMs)}  open intervals ${row.openIntervals}`,
-    )
+      `  retries ${row.retries}  wall ${ms(wallMs)}  open intervals ${row.openIntervals}`)
   }
 
   const refused = results.contention.reduce((n, c) => n + c.refused, 0)
@@ -276,8 +269,7 @@ async function benchContention() {
   if (refused) {
     console.log(
       `\n  WARNING: ${refused} of ${attempted} concurrent revisions were refused outright, not ` +
-      `retried. Codes: ${tally(results.contention.flatMap((c) => c.rawCodes))}`,
-    )
+      `retried. Codes: ${tally(results.contention.flatMap((c) => c.rawCodes))}`)
   }
 }
 
@@ -299,15 +291,13 @@ async function loadCorpus(from: number, to: number): Promise<number> {
       const p = params.length
       params.push(ENTITY.corpus, `${KEY.corpus}${i}`, statement, `[${vector.join(',')}]`)
       values.push(
-        `($${p + 1},$${p + 2},1,to_jsonb($${p + 3}::STRING),$${p + 3},now(),NULL,'inferred',0.9,$${p + 4})`,
-      )
+        `($${p + 1},$${p + 2},1,to_jsonb($${p + 3}::STRING),$${p + 3},now(),NULL,'inferred',0.9,$${p + 4})`)
     }
     await db.pool.query(
       `INSERT INTO facts
          (entity_id,key,version,value,statement,valid_from,valid_to,source,confidence,embedding)
        VALUES ${values.join(',')}`,
-      params,
-    )
+      params)
   }
 
   const elapsed = (performance.now() - started) / 1000
@@ -334,16 +324,14 @@ async function planFor(sql: string, params: unknown[]): Promise<string> {
 
 async function countOpenFacts(): Promise<number> {
   const r = await db.pool.query<{ n: number }>(
-    `SELECT count(*)::INT AS n FROM facts WHERE valid_to IS NULL`,
-  )
+    `SELECT count(*)::INT AS n FROM facts WHERE valid_to IS NULL`)
   return r.rows[0].n
 }
 
 async function rangeCount(): Promise<number | null> {
   try {
     const r = await db.pool.query<{ n: number }>(
-      `SELECT count(*)::INT AS n FROM [SHOW RANGES FROM TABLE facts]`,
-    )
+      `SELECT count(*)::INT AS n FROM [SHOW RANGES FROM TABLE facts]`)
     return r.rows[0].n
   } catch {
     // Not every cluster tier exposes range metadata; the corpus figures stand without it.
@@ -371,8 +359,7 @@ async function benchSemantic() {
       // a validity window instead of the open-interval test the partial index is built on.
       // Whatever separates these two columns is the cost of asking a historical question.
       const [, historical] = await timed(() =>
-        memory.semanticRecall(query, { limit: 5, asOf: new Date() }),
-      )
+        memory.semanticRecall(query, { limit: 5, asOf: new Date() }))
       asOfLat.push(historical)
     }
 
@@ -411,8 +398,7 @@ async function benchSemantic() {
     console.log(
       `      corpus ${String(corpus).padStart(6)} open facts  live p50 ${ms(pct(lat, 50))}` +
       `  asOf p50 ${ms(pct(asOfLat, 50))}` +
-      `  load ${rowsPerSec ? `${rowsPerSec.toFixed(0)} rows/s` : 'n/a'}`,
-    )
+      `  load ${rowsPerSec ? `${rowsPerSec.toFixed(0)} rows/s` : 'n/a'}`)
   }
 
   const scanned = results.semantic.filter((s) => s.plans.shipped !== 'vector index')
@@ -420,8 +406,7 @@ async function benchSemantic() {
     console.log(
       `\n  WARNING: the live recall path did not reach a vector index at ${scanned.length} of ` +
       `${results.semantic.length} corpus sizes: ${scanned.map((s) => `${s.corpus} facts ` +
-      `(${s.plans.shipped})`).join(', ')}`,
-    )
+      `(${s.plans.shipped})`).join(', ')}`)
   } else {
     console.log(`\n      every live query was served by ${vectorIndexes.map((v) => v.name).join(', ')}`)
   }
@@ -452,8 +437,7 @@ async function describeEnvironment() {
   const ddl = (await db.pool.query<{ create_statement: string }>('SHOW CREATE TABLE facts'))
     .rows[0].create_statement
   vectorIndexes = [...ddl.matchAll(/VECTOR INDEX (\w+) \(([^)]*)\)(?: WHERE ([^,\n]+))?/g)].map(
-    (m) => ({ name: m[1], definition: `${m[2]}${m[3] ? ` WHERE ${m[3]}` : ''}` }),
-  )
+    (m) => ({ name: m[1], definition: `${m[2]}${m[3] ? ` WHERE ${m[3]}` : ''}` }))
 
   results.env = {
     'Embedding provider': activeProvider(),
@@ -482,7 +466,7 @@ function report() {
     '## Benchmark',
     '',
     'Run `npm run bench`. Every figure is end-to-end from the client, so it carries a full',
-    `round-trip to the cluster region (${results.env['Cluster region']}, baseline ${rtt}) — a`,
+    `round-trip to the cluster region (${results.env['Cluster region']}, baseline ${rtt}), a`,
     'benchmark run from compute in that region reports a fraction of these numbers, and the',
     `gap is the point. Embeddings come from the \`${results.env['Embedding provider']}\` provider,`,
     'in-process and deterministic, so no model call and no second network hop is hidden inside',
@@ -494,27 +478,23 @@ function report() {
 
   if (w) out.push(
     '',
-    '### Write latency — one fact revision (close + open, one serializable transaction)',
+    '### Write latency, one fact revision (close + open, one serializable transaction)',
     '',
     mdTable(
       ['operations', 'p50', 'p95', 'p99', 'retries'],
-      [[w.n, ms(w.p50), ms(w.p95), ms(w.p99), w.retries]],
-    ),
+      [[w.n, ms(w.p50), ms(w.p95), ms(w.p99), w.retries]]),
     '',
-    `Five round-trips per revision — \`BEGIN\`, \`SELECT … FOR UPDATE\`, \`UPDATE\`, \`INSERT\`, \`COMMIT\` —`,
+    `Five round-trips per revision, \`BEGIN\`, \`SELECT … FOR UPDATE\`, \`UPDATE\`, \`INSERT\`, \`COMMIT\`, `,
     `plus the \`tx_journal\` write the console reads. Commit-only p50 was ${ms(w.commitOnlyP50)}.`,
-    `Measured against a table holding ${results.tableSizeAtStart} open facts.`,
-  )
+    `Measured against a table holding ${results.tableSizeAtStart} open facts.`)
 
   if (r) out.push(
     '',
-    '### Point-in-time read — `recallAt`',
+    '### Point-in-time read, `recallAt`',
     '',
     mdTable(
       ['operations', 'intervals in history', 'p50', 'p95', 'p99'],
-      [[r.n, r.rowsScanned, ms(r.p50), ms(r.p95), ms(r.p99)]],
-    ),
-  )
+      [[r.n, r.rowsScanned, ms(r.p50), ms(r.p95), ms(r.p99)]]))
 
   if (results.semantic.length) out.push(
     '',
@@ -525,10 +505,9 @@ function report() {
       results.semantic.map((s) => [
         s.corpus, ms(s.shipped.p50), ms(s.shipped.p95), ms(s.shipped.p99),
         s.plans.shipped,
-        s.loadRowsPerSec ? `${s.loadRowsPerSec.toFixed(0)} rows/s` : '—',
-        s.ranges ?? '—',
-      ]),
-    ),
+        s.loadRowsPerSec ? `${s.loadRowsPerSec.toFixed(0)} rows/s` : ', ',
+        s.ranges ?? ', ',
+      ])),
     '',
     scanned.length
       ? `> **The live recall path did not reach a vector index at ${scanned.length} of ` +
@@ -552,9 +531,7 @@ function report() {
       ['open facts', '`asOf` p50', 'p95', 'plan', '`<->` control', 'plan'],
       results.semantic.map((s) => [
         s.corpus, ms(s.asOf.p50), ms(s.asOf.p95), s.plans.asOf, ms(s.control), s.plans.control,
-      ]),
-    ),
-  )
+      ])))
 
   if (results.contention.length) out.push(
     '',
@@ -565,8 +542,7 @@ function report() {
       results.contention.map((c) => [
         c.writers, c.committed, c.refused, c.retries, c.codes,
         ms(c.wallMs), ms(c.wallMs / c.writers), c.openIntervals,
-      ]),
-    ),
+      ])),
     '',
     '`assertFact` takes `SELECT … FOR UPDATE` on the open interval before closing it, so',
     'competing writers queue on the lock rather than collide; retries and refusals are counted',
@@ -591,8 +567,7 @@ function report() {
         '',
         `All ${attemptedWrites} concurrent revisions committed. Contention is paid in latency, in the`,
         'wall-clock column, rather than in refused or discarded writes.',
-      ]),
-  )
+      ]))
 
   console.log(`\n${'─'.repeat(78)}\nMarkdown, ready to paste:\n${'─'.repeat(78)}\n`)
   console.log(out.join('\n'))
@@ -629,14 +604,12 @@ async function cleanup(): Promise<number> {
   const facts = await deleteInBatches(
     `DELETE FROM facts WHERE entity_id BETWEEN $1 AND $2 LIMIT 200`,
     [RANGE_FIRST, RANGE_LAST],
-    'rows',
-  )
+    'rows')
   if (facts >= 1000) process.stdout.write('\n')
   const journal = await deleteInBatches(
     `DELETE FROM tx_journal WHERE label LIKE 'assert:bench%' LIMIT 500`,
     [],
-    'journal rows',
-  )
+    'journal rows')
   return facts + journal
 }
 
@@ -648,7 +621,7 @@ async function shutdown(code: number) {
     try {
       console.log(`\nCleaning up… ${await cleanup()} rows removed.`)
     } catch (e) {
-      console.error('Cleanup failed — benchmark rows may remain:', (e as Error).message)
+      console.error('Cleanup failed, benchmark rows may remain:', (e as Error).message)
       code = code || 1
     }
     await db.pool.end().catch(() => {})
@@ -662,7 +635,7 @@ async function main() {
 
   const { DEMO_ACCOUNT } = await import('../lib/demo')
   if (DEMO_ACCOUNT >= RANGE_FIRST && DEMO_ACCOUNT <= RANGE_LAST) {
-    throw new Error('benchmark namespace overlaps the demo account — refusing to run')
+    throw new Error('benchmark namespace overlaps the demo account, refusing to run')
   }
 
   for (const signal of ['SIGINT', 'SIGTERM'] as const) {
@@ -672,12 +645,11 @@ async function main() {
   // Open every connection up front. Otherwise the first contention round pays for sixteen
   // TLS handshakes and reports them as contention.
   const clients = await Promise.all(
-    Array.from({ length: Number(process.env.PG_POOL_MAX) }, () => db.pool.connect()),
-  )
+    Array.from({ length: Number(process.env.PG_POOL_MAX) }, () => db.pool.connect()))
   await Promise.all(clients.map((c) => c.query('SELECT 1')))
   clients.forEach((c) => c.release())
 
-  console.log(`TREDECIM benchmark — sections: ${SECTIONS.join(', ')}`)
+  console.log(`TREDECIM benchmark, sections: ${SECTIONS.join(', ')}`)
   await describeEnvironment()
 
   const orphans = await cleanup()

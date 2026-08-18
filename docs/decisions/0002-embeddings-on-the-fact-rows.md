@@ -1,4 +1,4 @@
-# 0002 — Embeddings on the fact rows rather than a vector store
+# 0002, Embeddings on the fact rows rather than a vector store
 
 **Status:** accepted
 
@@ -8,8 +8,8 @@ The conventional shape is a vector store beside the database: facts in Postgres,
 in Pinecone or S3 Vectors, an identifier joining them.
 
 It works until a fact changes. The vector store ranks by similarity and has nowhere to put
-"and this one is no longer true". The superseded fact still matches the query text — often
-better than its replacement, having had longer to accumulate context — and nothing marks
+"and this one is no longer true". The superseded fact still matches the query text, often
+better than its replacement, having had longer to accumulate context, and nothing marks
 it dead. Keeping the two stores agreeing becomes an application concern, which means it is
 a concern that fails silently.
 
@@ -29,7 +29,7 @@ Moving the predicate to a validity window runs the same search against an earlie
 
 ## Consequences
 
-Semantic recall *cannot* return a closed fact. Not by convention, by construction — there
+Semantic recall *cannot* return a closed fact. Not by convention, by construction, there
 is no code path that reads a vector without also reading its interval.
 
 Writes carry the embedding, so a revision costs an embedding call before it can commit. In

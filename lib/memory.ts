@@ -28,7 +28,7 @@ const SELECT_FACT = `
  * Revise a fact.
  *
  * Closes the currently-open interval and opens a new one, in a single serializable
- * transaction. Either both happen or neither does — there is no instant at which the
+ * transaction. Either both happen or neither does, there is no instant at which the
  * entity has two IBANs, and no instant at which it has none.
  *
  * The partial unique index on (entity_id, key) WHERE valid_to IS NULL is what actually
@@ -47,8 +47,7 @@ export async function assertFact(
     episodeId?: string
     /** extra work committed atomically alongside the memory revision */
     alongside?: (c: PoolClient) => Promise<void>
-  } = {},
-) {
+  } = {}) {
   const vector = await embed(statement)
   const source = opts.source ?? 'tool_verified'
   const confidence = opts.confidence ?? 1.0
@@ -60,11 +59,10 @@ export async function assertFact(
         `SELECT version::INT AS version, valid_from AS "validFrom" FROM facts
           WHERE entity_id = $1 AND key = $2 AND valid_to IS NULL
           FOR UPDATE`,
-        [entityId, key],
-      )
+        [entityId, key])
 
       // Two revisions landing inside the same clock tick would close an interval at the
-      // instant it opened, and a zero-length interval is not a fact — the CHECK constraint
+      // instant it opened, and a zero-length interval is not a fact, the CHECK constraint
       // rejects it, which under contention turned into lost writes rather than a queue.
       // Advancing past the previous start keeps every interval strictly ordered, so
       // concurrent writers serialise instead of failing.
@@ -77,12 +75,11 @@ export async function assertFact(
       const nextVersion = prev.rows.length ? prev.rows[0].version + 1 : 1
 
       if (prev.rows.length) {
-        // Close the open interval. The row survives — nothing is ever deleted.
+        // Close the open interval. The row survives, nothing is ever deleted.
         await c.query(
           `UPDATE facts SET valid_to = $3, superseded_by = $4
             WHERE entity_id = $1 AND key = $2 AND valid_to IS NULL`,
-          [entityId, key, now, nextVersion],
-        )
+          [entityId, key, now, nextVersion])
       }
 
       await c.query(
@@ -93,8 +90,7 @@ export async function assertFact(
         [
           entityId, key, nextVersion, JSON.stringify(value), statement,
           now, source, confidence, toVector(vector),
-        ],
-      )
+        ])
 
       // Business writes ride along in the same transaction. This is the whole
       // argument for keeping memory in the database the application already uses.
@@ -102,8 +98,7 @@ export async function assertFact(
 
       return { version: nextVersion, closedPrevious: prev.rows.length > 0 }
     },
-    { episodeId: opts.episodeId, entityId },
-  )
+    { episodeId: opts.episodeId, entityId })
 }
 
 /** Facts currently in force. */
@@ -112,8 +107,7 @@ export async function recallNow(entityId: string): Promise<Fact[]> {
     `SELECT ${SELECT_FACT} FROM facts
       WHERE entity_id = $1 AND valid_to IS NULL
       ORDER BY key`,
-    [entityId],
-  )
+    [entityId])
   return r.rows
 }
 
@@ -128,8 +122,7 @@ export async function recallAt(entityId: string, at: Date): Promise<Fact[]> {
         AND valid_from <= $2
         AND (valid_to IS NULL OR valid_to > $2)
       ORDER BY key`,
-    [entityId, at],
-  )
+    [entityId, at])
   return r.rows
 }
 
@@ -146,14 +139,13 @@ export async function recallAsKnownAt(entityId: string, at: Date): Promise<Fact[
         AND valid_from <= $2
         AND (valid_to IS NULL OR valid_to > $2)
       ORDER BY key`,
-    [entityId, at],
-  )
+    [entityId, at])
   return r.rows
 }
 
 /**
  * The same question answered by the storage engine itself, via MVCC.
- * Independent of our columns — it reads the cluster as it physically was.
+ * Independent of our columns, it reads the cluster as it physically was.
  * Bounded by the zone's gc.ttlseconds, so it is a live-demo instrument rather than
  * the durable audit path.
  */
@@ -163,8 +155,7 @@ export async function recallViaMVCC(entityId: string, secondsAgo: number): Promi
       AS OF SYSTEM TIME '-${Math.max(1, Math.floor(secondsAgo))}s'
       WHERE entity_id = $1 AND valid_to IS NULL
       ORDER BY key`,
-    [entityId],
-  )
+    [entityId])
   return r.rows
 }
 
@@ -174,12 +165,11 @@ export async function recallViaMVCC(entityId: string, secondsAgo: number): Promi
  * A standalone vector store ranks by similarity alone, so a superseded IBAN with a
  * high cosine score comes back looking authoritative. Here the validity predicate and
  * the distance ordering are evaluated together by one engine, and `asOf` moves the
- * whole search back in time — similarity restricted to what was true then.
+ * whole search back in time, similarity restricted to what was true then.
  */
 export async function semanticRecall(
   query: string,
-  opts: { entityId?: string; limit?: number; asOf?: Date; minConfidence?: number } = {},
-): Promise<(Fact & { distance: number })[]> {
+  opts: { entityId?: string; limit?: number; asOf?: Date; minConfidence?: number } = {}): Promise<(Fact & { distance: number })[]> {
   const vector = toVector(await embed(query))
   const limit = opts.limit ?? 5
   const params: unknown[] = [vector, limit]
@@ -206,19 +196,17 @@ export async function semanticRecall(
       WHERE ${where.join(' AND ')}
       ORDER BY distance
       LIMIT $2`,
-    params,
-  )
+    params)
   return r.rows
 }
 
-/** Every interval for an entity — what the console draws as the lifeline. */
+/** Every interval for an entity, what the console draws as the lifeline. */
 export async function lifeline(entityId: string): Promise<Fact[]> {
   const r = await pool.query<Fact>(
     `SELECT ${SELECT_FACT} FROM facts
       WHERE entity_id = $1
       ORDER BY key, version`,
-    [entityId],
-  )
+    [entityId])
   return r.rows
 }
 

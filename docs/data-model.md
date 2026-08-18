@@ -3,7 +3,7 @@
 Six tables. The interesting one is `facts`; the rest exist to make its guarantees
 demonstrable.
 
-## `facts` — the memory
+## `facts`, the memory
 
 | Column | Why it exists |
 |---|---|
@@ -38,32 +38,32 @@ legitimate use of `valid_from`, so the ordering is enforced rather than trusted.
 | Index | Serves |
 |---|---|
 | `facts_one_open` | The invariant, and current-value lookups |
-| `facts_valid_window` | Point-in-time reads — "what was true at T" |
+| `facts_valid_window` | Point-in-time reads, "what was true at T" |
 | `facts_live_embedding_idx` | Semantic recall. Partial, cosine. See [decision 0003](decisions/0003-partial-vector-index.md) |
 
-## `episodes` — agent state
+## `episodes`, agent state
 
 One durable run. `step` moves `recall → decide → act → done`, checkpointed before each
 transition, so a killed worker is resumed rather than restarted. `scratch` holds the working
 state that would otherwise live in the process.
 
-## `ledger` and `accounts` — where the money is
+## `ledger` and `accounts`, where the money is
 
 `ledger.idempotency_key` is unique, which is what makes eight agents racing one refund
 produce exactly one payout. `accounts.balance_cents` is debited in the same transaction as
 the memory of having debited it.
 
-## `events` — what arrives
+## `events`, what arrives
 
 Inbound events the agent reacts to. `handled_at` marks completion.
 
-## `tx_journal` — every attempt
+## `tx_journal`, every attempt
 
 Including the ones the database refused; the aborts are the interesting rows. Carries
 `entity_id` directly rather than inferring attribution from timestamps, because an
 episode-less write is otherwise indistinguishable from another account's traffic.
 
-Row-level TTL expires it after seven days. It is the only table with one — see
+Row-level TTL expires it after seven days. It is the only table with one, see
 [decision 0001](decisions/0001-bitemporal-not-versioned.md) for why `facts` has none.
 
 ## The revision, in full

@@ -7,7 +7,7 @@ export const EMBEDDING_DIM = 1024
  * Embeddings sit behind an interface with two implementations.
  *
  * Bedrock is the real one. The deterministic local provider exists so the memory layer,
- * the agent loop and the whole test suite can run without cloud credentials — useful in
+ * the agent loop and the whole test suite can run without cloud credentials, useful in
  * CI, and it keeps provisioning off the critical path during development. It is a hashed
  * bag-of-tokens projection: genuinely similar sentences land near each other, which is
  * all the tests need, but it is not a semantic model and is never used in production.
@@ -55,7 +55,7 @@ export async function embed(text: string): Promise<number[]> {
 
   // Keyed by provider, not text alone. A single Bedrock failure falls back to the local
   // projection, and caching that under the bare text would keep serving a vector from the
-  // wrong space long after Bedrock recovered — distances against it are numbers with no
+  // wrong space long after Bedrock recovered, distances against it are numbers with no
   // meaning.
   const key = `${wanted}:${text}`
   const hit = cache.get(key)
@@ -79,8 +79,7 @@ async function bedrockEmbed(text: string): Promise<{ vector: number[]; provider:
         contentType: 'application/json',
         accept: 'application/json',
         body: JSON.stringify({ inputText: text, dimensions: EMBEDDING_DIM, normalize: true }),
-      }),
-    )
+      }))
     const parsed = JSON.parse(new TextDecoder().decode(res.body)) as { embedding?: number[] }
     if (!parsed.embedding?.length) throw new Error('empty embedding in Bedrock response')
     return { vector: parsed.embedding, provider: 'bedrock' }

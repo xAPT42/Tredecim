@@ -1,4 +1,4 @@
-# 0003 — A partial vector index over the facts in force
+# 0003, A partial vector index over the facts in force
 
 **Status:** accepted
 
@@ -15,7 +15,7 @@ Every semantic query was a full table scan, and nothing said so. The index exist
 `SHOW INDEXES` listed it, `SHOW CREATE TABLE` rendered it. Two separate causes, both silent:
 
 1. **The operator class defaults to `vector_l2_ops`**, which serves `<->` only. Ranking by
-   cosine `<=>` against it is not an error — the planner simply never picks the index.
+   cosine `<=>` against it is not an error, the planner simply never picks the index.
 2. **A full index is not applicable under the `valid_to IS NULL` predicate** every live
    recall carries. Correcting the operator class was not enough; the filter alone sent the
    planner back to a scan.
@@ -37,7 +37,7 @@ And `npm run verify` asserts the query plan, not just the results.
 
 The restriction turns out to be the right shape rather than a workaround. Only facts in
 force are ever semantically recalled, so **the index tracks the size of the present, not the
-size of the history**. Retaining every superseded interval — decision 0001 — costs storage
+size of the history**. Retaining every superseded interval, decision 0001, costs storage
 and costs the search nothing.
 
 Measured at ten thousand facts, network baseline subtracted: 476 ms scanning against 177 ms
@@ -53,5 +53,5 @@ and reported in the benchmark's `ranges` column rather than discovered later.
 ## Revisit if
 
 CockroachDB makes a full vector index applicable under a filter, at which point the
-partiality is no longer load-bearing — though it would still be the better shape for this
+partiality is no longer load-bearing, though it would still be the better shape for this
 workload.

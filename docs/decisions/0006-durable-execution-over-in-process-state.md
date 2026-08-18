@@ -1,4 +1,4 @@
-# 0006 — Durable execution rather than in-process agent state
+# 0006, Durable execution rather than in-process agent state
 
 **Status:** accepted
 
@@ -14,7 +14,7 @@ you cannot recover if a workflow crashes halfway."
 
 ## Decision
 
-The agent holds nothing between steps. Every transition — `recall`, `decide`, `act` — is
+The agent holds nothing between steps. Every transition, `recall`, `decide`, `act`, is
 written to `episodes` before the next begins. A recovery sweep re-runs anything still marked
 running.
 

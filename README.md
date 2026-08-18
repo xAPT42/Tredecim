@@ -34,8 +34,8 @@ that pays it are one serializable transaction. Neither can outlive the other.
 payment is resumed by another. Because deciding and acting are separated by an unbounded
 gap, the decision is re-checked under `FOR UPDATE` before money moves.
 
-**Provenance enforced at the point of payment.** A hostile revision is *recorded* — refusing
-to write destroys the evidence — and refused when it would move money.
+**Provenance enforced at the point of payment.** A hostile revision is *recorded*, refusing
+to write destroys the evidence, and refused when it would move money.
 
 **64 assertions against a live cluster, including the query plan.**
 
@@ -46,13 +46,13 @@ to write destroys the evidence — and refused when it would move money.
 
 A language model has no memory. Everything an agent appears to remember is something the
 surrounding system chose to put back in the prompt. So the interesting question is never
-*can the agent recall this* — it is **which version of the truth does it recall, and how
+*can the agent recall this*, it is **which version of the truth does it recall, and how
 does it know that version is still good.**
 
 Most agent memory answers that with vector similarity: embed the conversation, embed the
 query, return the nearest neighbours. That works right up to the moment a fact changes.
-The old fact still matches the query text — often better than the new one, since it has had
-longer to accumulate context — and nothing in the store marks it as dead. The agent
+The old fact still matches the query text, often better than the new one, since it has had
+longer to accumulate context, and nothing in the store marks it as dead. The agent
 retrieves a superseded truth with full confidence.
 
 In a customer-support toy, that is an annoyance. In anything touching money, it is a
@@ -73,16 +73,16 @@ them is where audit questions live:
 
 | Question | Needs |
 |---|---|
-| What is the IBAN? | neither axis — any database answers this |
+| What is the IBAN? | neither axis, any database answers this |
 | What was the IBAN at 14:02? | valid time |
 | What did the agent *believe* at 14:02? | transaction time |
-| The agent was wrong — since when do we know? | **both** |
+| The agent was wrong, since when do we know? | **both** |
 
 The last row is the one that matters, and it is the one no vector store can answer.
 
 ## Why this is not a modelling exercise
 
-Bitemporality is old — Snodgrass wrote the book in 1999, and every serious financial system
+Bitemporality is old, Snodgrass wrote the book in 1999, and every serious financial system
 has some version of it. What is new is *who is doing the writing*.
 
 A human operator changing a bank account produces one write, reviewed, at human speed. An
@@ -145,7 +145,7 @@ CREATE UNIQUE INDEX facts_one_open
 ```
 
 An agent that tries to assert a second truth without closing the first gets a constraint
-violation. So does anything else that talks to the database — a script, a migration, a
+violation. So does anything else that talks to the database, a script, a migration, a
 second service written by someone who never read this file.
 
 ### Embeddings live on the fact rows
@@ -163,11 +163,11 @@ SELECT statement, embedding <=> $query AS distance
 
 Similarity ranking and validity are evaluated together, by one engine, in one transaction.
 Semantic recall *cannot* return a closed fact. Swap the predicate for a `valid_from/valid_to`
-window and the same search runs against an earlier instant — similarity restricted to what
+window and the same search runs against an earlier instant, similarity restricted to what
 was true then.
 
 Making the planner actually *use* the index took two corrections, and both failed
-silently — the index existed, `SHOW INDEXES` listed it, and every search was a full scan:
+silently, the index existed, `SHOW INDEXES` listed it, and every search was a full scan:
 
 - **The operator class has to match the operator.** `CREATE VECTOR INDEX` defaults to
   `vector_l2_ops`, which serves `<->` only. Ranking by cosine `<=>` against it is not an
@@ -186,7 +186,7 @@ success from the outside.
 
 ### Provenance is checked where the money moves
 
-Every fact carries a `source` — `tool_verified`, `user_asserted`, `inferred` — and a
+Every fact carries a `source`, `tool_verified`, `user_asserted`, `inferred`, and a
 `confidence`. Recording that is easy, and on its own worth nothing. The question is whether
 anything reads it at the moment being wrong costs something.
 
@@ -206,8 +206,8 @@ if (iban.source !== 'tool_verified' || iban.confidence < PAYOUT_CONFIDENCE_FLOOR
 }
 ```
 
-It sits inside `assertStillValid` — the re-validation that already runs under `FOR UPDATE`
-in the transaction that writes the ledger row — and deliberately not in `decide`. That
+It sits inside `assertStillValid`, the re-validation that already runs under `FOR UPDATE`
+in the transaction that writes the ledger row, and deliberately not in `decide`. That
 placement is the point. A decision is taken against memory as it was at decision time, and
 an episode parked between deciding and acting can be overtaken by an untrusted revision; a
 check in `decide` passes that case and pays the attacker. Testing at the moment of the write
@@ -220,12 +220,12 @@ Two consequences worth stating plainly:
   away the evidence of the attempt. Recording and acting are different questions; only the
   second is gated.
 - **The refusal is terminal, not a retry.** A stale decision is repaired by deciding again.
-  An untrusted destination is not — the second decision reads the same fact — so the
+  An untrusted destination is not, the second decision reads the same fact, so the
   episode ends refused, carrying the provenance that refused it.
 
 This is also where the second temporal axis pays for itself. After a refusal the questions
 are *when did this value enter*, *what did it replace*, and *what would have been paid an
-hour earlier* — and the history answers all three from rows nothing overwrote. `npm run
+hour earlier*, and the history answers all three from rows nothing overwrote. `npm run
 verify` section `[10]` asserts the whole path, including that a tool-verified destination
 still gets paid, because a policy that refuses everything proves nothing.
 
@@ -247,7 +247,7 @@ if the memory pipeline runs after the fact, there is a window where the two disa
 
 The re-validation inside that box matters more than it looks. `recall`, `decide` and `act`
 are separately checkpointed, so an episode can sit parked between deciding and acting for
-an unbounded time — which is the point of durable execution. A decision is therefore a
+an unbounded time, which is the point of durable execution. A decision is therefore a
 proposal, not an authorisation: before money moves, `act` re-reads the facts it depends on
 under `FOR UPDATE`, in the same transaction as the payout. A customer who changes their
 bank details while the episode waits is not paid at the account they just replaced.
@@ -258,20 +258,20 @@ bank details while the episode waits is not paid at the account they just replac
 
 | Used | Where |
 |---|---|
-| Distributed vector indexing | Partial C-SPANN index over the facts in force, cosine `<=>` — `lib/schema.sql`. The plan is asserted, not assumed |
-| Managed MCP Server | `npm run schema-check` — reads the schema the cluster actually holds and fails on drift from what the code depends on. [docs/mcp.md](docs/mcp.md) |
-| `ccloud` CLI | `scripts/provision.sh` — provisions and inspects the cluster, with every flag asserted against the installed binary. [docs/operations.md](docs/operations.md) |
+| Distributed vector indexing | Partial C-SPANN index over the facts in force, cosine `<=>`, `lib/schema.sql`. The plan is asserted, not assumed |
+| Managed MCP Server | `npm run schema-check`, reads the schema the cluster actually holds and fails on drift from what the code depends on. [docs/mcp.md](docs/mcp.md) |
+| `ccloud` CLI | `scripts/provision.sh`, provisions and inspects the cluster, with every flag asserted against the installed binary. [docs/operations.md](docs/operations.md) |
 | Agent Skills Repo | Applied to this cluster; caught the application user holding admin. [docs/skills/audit.md](docs/skills/audit.md) |
-| Serializable transactions | `lib/db.ts` — 40001 retry with exponential backoff and jitter |
+| Serializable transactions | `lib/db.ts`, 40001 retry with exponential backoff and jitter |
 | Partial unique index | the one-open-interval invariant |
 | `AS OF SYSTEM TIME` | MVCC time travel, `recallViaMVCC` in `lib/memory.ts` |
-| Row-level TTL | The journal expires after seven days without a cleanup job to write or monitor — `lib/schema.sql` |
+| Row-level TTL | The journal expires after seven days without a cleanup job to write or monitor, `lib/schema.sql` |
 
 **AWS**
 
 | Used | Where |
 |---|---|
-| Amazon Bedrock | Titan Text Embeddings v2, 1024-dim — `lib/embeddings.ts` |
+| Amazon Bedrock | Titan Text Embeddings v2, 1024-dim, `lib/embeddings.ts` |
 | AWS Amplify Hosting | deployment target for the Next.js console |
 
 Embeddings sit behind an interface with a deterministic local implementation, so the test
@@ -290,7 +290,7 @@ npm run migrate && npm run verify
 
 **64 assertions across eleven sections, and the query plan is one of them.** That last part
 matters more than the count. Two of the hardest bugs in this project were an index that was
-built, listed by `SHOW INDEXES`, and never chosen by the planner — a failure that is
+built, listed by `SHOW INDEXES`, and never chosen by the planner, a failure that is
 invisible to every test that only checks results. `verify` reads `EXPLAIN` and fails if the
 live recall path falls back to a scan.
 
@@ -323,22 +323,22 @@ npm run dev
 
 Each button makes one claim you can watch land in the lifeline and the transaction journal:
 
-- **Supersede a fact** — an interval closes, the next opens, nothing is deleted
-- **Eight agents, one refund** — concurrent workers race; seven are refused with `23505`
-- **Kill a worker mid-flight** — an episode dies between deciding and acting, then resumes
-- **Stale-proof recall** — a superseded fact still matches the query text, and stays unreachable
-- **Poison the memory** — an untrusted actor asserts a new destination account. The memory
+- **Supersede a fact**, an interval closes, the next opens, nothing is deleted
+- **Eight agents, one refund**, concurrent workers race; seven are refused with `23505`
+- **Kill a worker mid-flight**, an episode dies between deciding and acting, then resumes
+- **Stale-proof recall**, a superseded fact still matches the query text, and stays unreachable
+- **Poison the memory**, an untrusted actor asserts a new destination account. The memory
   records it; the payout policy refuses to spend it, and the lifeline shows the instant it
   entered and the tool-verified fact it displaced
 
 The scrubber along the bottom rewinds the memory: pick an instant and the console reports
-what was true then, what the agent knew then, and what is in force now — three different
+what was true then, what the agent knew then, and what is in force now, three different
 answers from the same rows.
 
 ## Benchmark
 
 `npm run bench`. Every figure is end-to-end from the client, so each carries a full
-round-trip to `us-east-1` (baseline p50 115 ms) — the same code co-located in that region
+round-trip to `us-east-1` (baseline p50 115 ms), the same code co-located in that region
 reports a fraction of these, and that gap is itself the finding. Embeddings use the
 deterministic local provider so no model call hides inside a measurement. The run writes
 under its own entity namespace and deletes it afterwards.
@@ -357,7 +357,7 @@ comparison:
 The scan grows roughly 15× as the corpus grows 18×, which is the linear signature. The
 index path is sub-linear and about 2.7× cheaper at ten thousand facts, with the gap
 widening. It is not flat, and the small-corpus point is an outlier most likely explained by
-index warm-up — one sample, so it is reported rather than explained away.
+index warm-up, one sample, so it is reported rather than explained away.
 
 **Concurrent revisions of the same fact.** 120 writers across four rounds:
 
@@ -370,7 +370,7 @@ index warm-up — one sample, so it is reported rather than explained away.
 
 Contention is paid in latency, not in discarded writes. Two things had to be true for
 that: intervals are advanced past the previous start so two revisions inside one clock tick
-cannot produce a zero-length interval, and the pool is sized to the concurrency — a writer
+cannot produce a zero-length interval, and the pool is sized to the concurrency, a writer
 holds its connection while waiting on `FOR UPDATE`, so N concurrent revisions need N
 connections, and the serverless default starves them into what looks like contention.
 
@@ -397,7 +397,7 @@ remote service it calls occasionally will not notice. One that commits on every 
 will notice on every decision.
 
 The concurrency figures are real too. Running the eight-agent scenario in production
-leaves exactly one ledger entry and records the rest as `23505` refusals in the journal —
+leaves exactly one ledger entry and records the rest as `23505` refusals in the journal 
 those aborts are the system working, not failing.
 
 ## What this does not do
@@ -410,8 +410,8 @@ than one you did not notice.
   cannot serve, so it falls back to a scan. That path is analytical and rare; the live
   path is the hot one and it is indexed. Fixing this properly needs a second index per
   time window, which is not worth its write cost here.
-- **Writes are chatty.** One revision is five round-trips — `BEGIN`, `SELECT … FOR UPDATE`,
-  `UPDATE`, `INSERT`, `COMMIT` — plus the journal write. That is the price of doing the
+- **Writes are chatty.** One revision is five round-trips, `BEGIN`, `SELECT … FOR UPDATE`,
+  `UPDATE`, `INSERT`, `COMMIT`, plus the journal write. That is the price of doing the
   close and the open atomically, and it is why co-location matters so much.
 - **Facts have no retention policy, deliberately.** The transaction journal expires after
   seven days through CockroachDB's row-level TTL, because it is observability and nothing
@@ -439,12 +439,12 @@ than one you did not notice.
 
 The framing owes a lot to work that got here first:
 
-- Allen, *Maintaining Knowledge about Temporal Intervals* (1983) — the thirteen relations
-- Snodgrass, *Developing Time-Oriented Database Applications in SQL* — bitemporal modelling
-- Sumers et al., [*Cognitive Architectures for Language Agents*](https://arxiv.org/abs/2309.02427) — the memory taxonomy
-- Packer et al., [*MemGPT*](https://arxiv.org/abs/2310.08560) — memory as an OS problem
-- Rasmussen et al., [*Zep*](https://arxiv.org/abs/2501.13956) — temporal knowledge graphs, edge validity intervals
-- Chhikara et al., [*Mem0*](https://arxiv.org/abs/2504.19413) — extraction and consolidation in production
+- Allen, *Maintaining Knowledge about Temporal Intervals* (1983), the thirteen relations
+- Snodgrass, *Developing Time-Oriented Database Applications in SQL*, bitemporal modelling
+- Sumers et al., [*Cognitive Architectures for Language Agents*](https://arxiv.org/abs/2309.02427), the memory taxonomy
+- Packer et al., [*MemGPT*](https://arxiv.org/abs/2310.08560), memory as an OS problem
+- Rasmussen et al., [*Zep*](https://arxiv.org/abs/2501.13956), temporal knowledge graphs, edge validity intervals
+- Chhikara et al., [*Mem0*](https://arxiv.org/abs/2504.19413), extraction and consolidation in production
 
 The gap this fills: those systems model time in a memory layer built beside the database.
 Tredecim puts it in the database, so the same transaction that moves the money records why.

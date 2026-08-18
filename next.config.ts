@@ -1,7 +1,7 @@
 import type { NextConfig } from 'next'
 
 /**
- * Amplify exposes console-configured variables to the build container only — the SSR
+ * Amplify exposes console-configured variables to the build container only, the SSR
  * runtime receives none of them, at either app or branch scope. Declaring the keys here
  * inlines them into the compiled output, which is what actually ships.
  *
@@ -22,8 +22,7 @@ export const RUNTIME_KEYS = [
 
 const nextConfig: NextConfig = {
   env: Object.fromEntries(
-    RUNTIME_KEYS.flatMap((k) => (process.env[k] ? [[k, process.env[k]!]] : [])),
-  ),
+    RUNTIME_KEYS.flatMap((k) => (process.env[k] ? [[k, process.env[k]!]] : []))),
 }
 
 export default nextConfig

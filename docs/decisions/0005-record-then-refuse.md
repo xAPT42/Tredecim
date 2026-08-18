@@ -1,4 +1,4 @@
-# 0005 — Record a hostile fact, refuse to act on it
+# 0005, Record a hostile fact, refuse to act on it
 
 **Status:** accepted
 
@@ -25,7 +25,7 @@ refuses if the destination is not `tool_verified` above the confidence floor.
 A memory that declines to record what it was told has quietly decided what is true, and has
 destroyed the evidence of the attempt. Recording and acting are different questions and only
 the second is expensive to get wrong. After a refusal the history answers *when did this
-enter*, *what did it replace*, and *what would have been paid an hour earlier* — from rows
+enter*, *what did it replace*, and *what would have been paid an hour earlier*, from rows
 nothing overwrote.
 
 The check sits in `act`, not `decide`. An episode parked between deciding and acting can be
@@ -37,7 +37,7 @@ an untrusted destination is not, because the second decision reads the same fact
 would be a loop, not a recovery.
 
 Trust is required to *move* money, not to withhold it: an unverified freeze still blocks a
-payout. Asymmetry is deliberate — the safe direction should not need credentials.
+payout. Asymmetry is deliberate, the safe direction should not need credentials.
 
 ## Revisit if
 

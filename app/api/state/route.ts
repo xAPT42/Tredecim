@@ -24,8 +24,7 @@ export async function GET() {
         hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
         provider: activeProvider(),
       },
-      { status: 503 },
-    )
+      { status: 503 })
   }
 }
 
@@ -36,8 +35,7 @@ async function readState() {
     pool.query(
       `SELECT id, kind, payload, received_at AS "receivedAt", handled_at AS "handledAt"
          FROM events WHERE entity_id = $1 ORDER BY received_at DESC LIMIT 12`,
-      [DEMO_ACCOUNT],
-    ),
+      [DEMO_ACCOUNT]),
 
     // Attributed by entity rather than inferred from timing: a verification run against
     // its own throwaway accounts used to surface here as if it were demo traffic.
@@ -47,8 +45,7 @@ async function readState() {
          LEFT JOIN episodes e ON e.id = j.episode_id
         WHERE j.entity_id = $1 OR e.entity_id = $1
         ORDER BY j.at DESC LIMIT 14`,
-      [DEMO_ACCOUNT],
-    ),
+      [DEMO_ACCOUNT]),
 
     pool.query(
       // sum() yields DECIMAL, which the driver hands back as a string; cast it back.
@@ -57,8 +54,7 @@ async function readState() {
                 AS "movedCents",
               (SELECT count(*)::INT FROM ledger WHERE account_id = $1) AS "payouts"
          FROM accounts WHERE id = $1`,
-      [DEMO_ACCOUNT],
-    ),
+      [DEMO_ACCOUNT]),
 
     // Scoped to this account, and measured over the most recent commits rather than a
     // wall-clock window. Both matter: a fixed window reports a confident 0 ms whenever the
@@ -73,13 +69,12 @@ async function readState() {
                 WHERE j.status = 'commit'
                   AND (j.entity_id = $1 OR e.entity_id = $1)
                 ORDER BY j.at DESC LIMIT 30)`,
-      [DEMO_ACCOUNT],
-    ),
+      [DEMO_ACCOUNT]),
   ])
 
   // A burst of concurrent agents writes the same refusal dozens of times. Showing each
   // one buries the rest of the journal, so runs of identical outcomes collapse into a
-  // single row carrying its count — the number is the interesting part, not the repetition.
+  // single row carrying its count, the number is the interesting part, not the repetition.
   const journalRows = collapseRuns(journal.rows as JournalRow[])
   const refused = journal.rows.filter((r) => r.status === 'abort').length
 
@@ -94,7 +89,7 @@ async function readState() {
       closedFacts: facts.filter((f) => f.validTo !== null).length,
       openFacts: facts.filter((f) => f.validTo === null).length,
       refusedWrites: refused,
-      // null rather than 0 when nothing has been measured — the console renders a dash.
+      // null rather than 0 when nothing has been measured, the console renders a dash.
       p50CommitMs: latency.rows[0]?.n ? Number(latency.rows[0].p50) : null,
     },
   })

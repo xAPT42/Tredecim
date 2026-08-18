@@ -29,7 +29,7 @@ import { EMBEDDING_DIM } from '../lib/embeddings'
 
 let failures = 0
 const check = (name: string, ok: boolean, detail = '') => {
-  console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`)
+  console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `, ${detail}` : ''}`)
   if (!ok) failures++
 }
 
@@ -319,8 +319,7 @@ function readDeclared(source: string) {
     .map((m) => m[1])
 
   const indexes: DeclaredIndex[] = [...sql.matchAll(
-    /CREATE\s+(UNIQUE\s+|VECTOR\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z0-9_]*)\s+ON\s+([a-z_][a-z0-9_]*)\s*\(([^)]*)\)\s*(?:WHERE\s+([^;]+?))?\s*;/gi,
-  )].map((m) => ({
+    /CREATE\s+(UNIQUE\s+|VECTOR\s+)?INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z0-9_]*)\s+ON\s+([a-z_][a-z0-9_]*)\s*\(([^)]*)\)\s*(?:WHERE\s+([^;]+?))?\s*;/gi)].map((m) => ({
     name: m[2],
     table: m[3],
     unique: /UNIQUE/i.test(m[1] ?? ''),
@@ -331,12 +330,10 @@ function readDeclared(source: string) {
 
   // Both the inline CONSTRAINT form and the idempotent ALTER TABLE form appear in the file.
   const checks = new Set(
-    [...sql.matchAll(/CONSTRAINT\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z0-9_]*)\s+CHECK/gi)].map((m) => m[1]),
-  )
+    [...sql.matchAll(/CONSTRAINT\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z0-9_]*)\s+CHECK/gi)].map((m) => m[1]))
 
   const addedColumns = [...sql.matchAll(
-    /ALTER\s+TABLE\s+([a-z_][a-z0-9_]*)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z0-9_]*)\s+([A-Za-z0-9()]+)/gi,
-  )].map((m) => ({ table: m[1], column: m[2], type: m[3].toUpperCase() }))
+    /ALTER\s+TABLE\s+([a-z_][a-z0-9_]*)\s+ADD\s+COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z0-9_]*)\s+([A-Za-z0-9()]+)/gi)].map((m) => ({ table: m[1], column: m[2], type: m[3].toUpperCase() }))
 
   const embeddingDim = Number(sql.match(/embedding\s+VECTOR\((\d+)\)/i)?.[1] ?? NaN)
 
@@ -376,8 +373,7 @@ const opclassOf = (def: string) => def.match(/\b(vector_\w+_ops)\b/i)?.[1]?.toLo
 
 async function main() {
   const declared = readDeclared(
-    fs.readFileSync(path.join(process.cwd(), 'lib', 'schema.sql'), 'utf8'),
-  )
+    fs.readFileSync(path.join(process.cwd(), 'lib', 'schema.sql'), 'utf8'))
 
   console.log('TREDECIM schema drift check')
 
@@ -411,8 +407,7 @@ async function main() {
   const tables = (await db.exec(
     `SELECT table_name FROM information_schema.tables
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-        AND table_catalog = current_database()`,
-  )).map((r) => String(r.table_name))
+        AND table_catalog = current_database()`)).map((r) => String(r.table_name))
 
   const missingTables = declared.tables.filter((t) => !tables.includes(t))
   check('every declared table is deployed', missingTables.length === 0,
@@ -451,8 +446,7 @@ async function main() {
 
   const constraints = await db.exec(`SELECT * FROM [SHOW CONSTRAINTS FROM facts]`)
   const unique = constraints.find(
-    (c) => c.constraint_name === 'facts_one_open' && c.constraint_type === 'UNIQUE',
-  )
+    (c) => c.constraint_name === 'facts_one_open' && c.constraint_type === 'UNIQUE')
   check('SHOW CONSTRAINTS agrees it is a validated UNIQUE constraint',
     !!unique && unique.validated === true, String(unique?.details ?? 'absent'))
 
@@ -505,8 +499,7 @@ async function main() {
   const columns = await db.exec(
     `SELECT table_name, column_name, crdb_sql_type, is_nullable
        FROM information_schema.columns
-      WHERE table_schema = 'public' AND table_catalog = current_database()`,
-  )
+      WHERE table_schema = 'public' AND table_catalog = current_database()`)
   const columnType = (table: string, column: string) =>
     columns.find((c) => c.table_name === table && c.column_name === column)?.crdb_sql_type as string | undefined
 
@@ -538,8 +531,7 @@ async function main() {
   const probe = `[${Array.from({ length: EMBEDDING_DIM }, (_, i) => (i % 7) / 10).join(',')}]`
   const plan = (await db.exec(
     `EXPLAIN SELECT statement FROM facts
-      WHERE valid_to IS NULL ORDER BY embedding <=> '${probe}'::VECTOR LIMIT 5`,
-  )).map((r) => Object.values(r).join(' ')).join('\n')
+      WHERE valid_to IS NULL ORDER BY embedding <=> '${probe}'::VECTOR LIMIT 5`)).map((r) => Object.values(r).join(' ')).join('\n')
 
   check('no full scan in the plan', !/FULL SCAN/i.test(plan),
     /FULL SCAN/i.test(plan) ? 'check the operator class and the partial predicate' : '')

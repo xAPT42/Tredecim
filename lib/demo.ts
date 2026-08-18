@@ -12,13 +12,11 @@ export async function reset() {
   await pool.query(`DELETE FROM events      WHERE entity_id  = $1`, [DEMO_ACCOUNT])
   await pool.query(
     `DELETE FROM tx_journal WHERE episode_id IN (SELECT id FROM episodes WHERE entity_id = $1)`,
-    [DEMO_ACCOUNT],
-  )
+    [DEMO_ACCOUNT])
   await pool.query(`DELETE FROM episodes    WHERE entity_id  = $1`, [DEMO_ACCOUNT])
   await pool.query(
     `UPSERT INTO accounts (id, label, balance_cents) VALUES ($1, 'Demo account 88', 100000)`,
-    [DEMO_ACCOUNT],
-  )
+    [DEMO_ACCOUNT])
 
   // A short backdated history so the lifeline has real intervals to draw from the start.
   const now = Date.now()
@@ -42,30 +40,26 @@ export async function runScenario(id: ScenarioId) {
   switch (id) {
     case 'supersede': {
       await handleEvent(DEMO_ACCOUNT, 'iban.changed', { iban: 'FR76…4412' })
-      return { note: 'iban revised — the previous interval is now closed, not erased' }
+      return { note: 'iban revised, the previous interval is now closed, not erased' }
     }
 
     case 'race': {
       const ev = await pool.query<{ id: string }>(
         `INSERT INTO events (entity_id, kind, payload)
          VALUES ($1,'refund.requested','{"amountCents":24000}') RETURNING id`,
-        [DEMO_ACCOUNT],
-      )
+        [DEMO_ACCOUNT])
       const eventId = ev.rows[0].id
       const episodes = await Promise.all(
         Array.from({ length: 8 }, () =>
           startEpisode(eventId, DEMO_ACCOUNT, 'Refund 240.00 EUR', {
             kind: 'refund.requested',
             payload: { amountCents: 24000 },
-          }),
-        ),
-      )
+          })))
       const settled = await Promise.allSettled(episodes.map((e) => runEpisode(e)))
       const refused = settled.filter((s) => s.status === 'rejected').length
       const paid = await pool.query<{ n: number }>(
         `SELECT count(*)::INT AS n FROM ledger WHERE idempotency_key = $1`,
-        [`refund:${eventId}`],
-      )
+        [`refund:${eventId}`])
       return { attempted: 8, refused, payouts: paid.rows[0].n }
     }
 
@@ -73,8 +67,7 @@ export async function runScenario(id: ScenarioId) {
       const ev = await pool.query<{ id: string }>(
         `INSERT INTO events (entity_id, kind, payload)
          VALUES ($1,'refund.requested','{"amountCents":15000}') RETURNING id`,
-        [DEMO_ACCOUNT],
-      )
+        [DEMO_ACCOUNT])
       const episodeId = await startEpisode(ev.rows[0].id, DEMO_ACCOUNT, 'Refund 150.00 EUR', {
         kind: 'refund.requested',
         payload: { amountCents: 15000 },
@@ -84,12 +77,10 @@ export async function runScenario(id: ScenarioId) {
         `UPDATE episodes SET step='act', scratch = scratch || $2::JSONB WHERE id=$1`,
         [episodeId, JSON.stringify({
           decision: { action: 'refund', amountCents: 15000, destination: 'FR76…4412' },
-        })],
-      )
+        })])
       const resumed = await resumeOrphaned(0)
       const paid = await pool.query<{ n: number }>(
-        `SELECT count(*)::INT AS n FROM ledger WHERE episode_id=$1`, [episodeId],
-      )
+        `SELECT count(*)::INT AS n FROM ledger WHERE episode_id=$1`, [episodeId])
       return { episodeId, resumed: resumed.includes(episodeId), payouts: paid.rows[0].n }
     }
 
@@ -98,15 +89,14 @@ export async function runScenario(id: ScenarioId) {
       // the console needs a fact that was true for a while before it was recorded. A
       // dispute opened twelve minutes ago and is only being filed now: valid_from is
       // backdated, recorded_at is this instant. Rewind to ten minutes ago and the two
-      // questions give different answers — which is the entire argument for keeping both.
+      // questions give different answers, which is the entire argument for keeping both.
       const openedAt = new Date(Date.now() - 12 * 60_000)
       await assertFact(
         DEMO_ACCOUNT,
         'chargeback',
         { status: 'open', ref: 'CB-7719', openedAt: openedAt.toISOString() },
         'A chargeback CB-7719 was opened against this account',
-        { validFrom: openedAt, source: 'tool_verified' },
-      )
+        { validFrom: openedAt, source: 'tool_verified' })
       return {
         note: 'chargeback backdated 12 minutes, recorded now',
         tryThis: 'rewind to ~10 minutes ago: it was already true, and the agent did not know it',
@@ -117,21 +107,20 @@ export async function runScenario(id: ScenarioId) {
       // Memory poisoning: an untrusted actor writes a destination account into the agent's
       // memory and waits for some later, entirely innocent request to spend it. The plant
       // and the payout are separate episodes, minutes or weeks apart, which is what makes
-      // this hard to see at the moment money moves — by then the poisoned fact is simply
+      // this hard to see at the moment money moves, by then the poisoned fact is simply
       // what the memory says, indistinguishable from a fact the customer really changed.
       const ATTACKER_IBAN = 'FR99…8842'
 
       // Read the statement. It is word-for-word the shape a legitimate revision writes,
       // because an attacker chooses the text. Nothing in the sentence, and nothing its
-      // embedding encodes, separates this from the truth — so the defence cannot live in
+      // embedding encodes, separates this from the truth, so the defence cannot live in
       // the text. It has to live in the metadata that travels beside it.
       const planted = await assertFact(
         DEMO_ACCOUNT,
         'iban',
         ATTACKER_IBAN,
         `Destination account is ${ATTACKER_IBAN}`,
-        { source: 'user_asserted', confidence: 0.4 },
-      )
+        { source: 'user_asserted', confidence: 0.4 })
 
       // The write succeeds, and that is correct. A memory that refuses to record what it
       // was told is a memory that has quietly decided what is true, and it loses the very
@@ -146,8 +135,7 @@ export async function runScenario(id: ScenarioId) {
         paid?: boolean; refused?: string; reason?: string
       }
       const paid = await pool.query<{ n: number }>(
-        `SELECT count(*)::INT AS n FROM ledger WHERE episode_id = $1`, [episode.id],
-      )
+        `SELECT count(*)::INT AS n FROM ledger WHERE episode_id = $1`, [episode.id])
 
       return {
         asserted: {
@@ -203,7 +191,7 @@ export async function runScenario(id: ScenarioId) {
 // A memory layer can extract insights from a conversation after the fact, in a background
 // pass, rather than on the request path. That is a reasonable design: the business write
 // does not wait on an extraction, and the agent stays responsive under load. It has one
-// consequence, and it is structural rather than a bug — between the business write and the
+// consequence, and it is structural rather than a bug, between the business write and the
 // memory that records it there is an interval in which the two disagree. The interval can
 // be made short. It cannot be made zero, because it is the gap between two commits.
 //
@@ -246,7 +234,7 @@ export type AsyncWindowResult = {
 }
 
 /**
- * Path A — deferred extraction. The business write commits on its own, and the memory of
+ * Path A, deferred extraction. The business write commits on its own, and the memory of
  * having made it is left to a later pass.
  *
  * That later pass is not stubbed, mocked or flagged off: this function returns after the
@@ -263,15 +251,12 @@ export async function runDeferredExtraction(accountId: string) {
       await c.query(
         `INSERT INTO ledger (account_id, amount_cents, kind, idempotency_key)
          VALUES ($1, $2, 'refund', $3)`,
-        [accountId, -WINDOW_AMOUNT_CENTS, idempotencyKey],
-      )
+        [accountId, -WINDOW_AMOUNT_CENTS, idempotencyKey])
       await c.query(
         `UPDATE accounts SET balance_cents = balance_cents - $2 WHERE id = $1`,
-        [accountId, WINDOW_AMOUNT_CENTS],
-      )
+        [accountId, WINDOW_AMOUNT_CENTS])
     },
-    { entityId: accountId },
-  )
+    { entityId: accountId })
 
   // Control returns here, inside the window. The extraction that would write `last_refund`
   // never runs.
@@ -279,7 +264,7 @@ export async function runDeferredExtraction(accountId: string) {
 }
 
 /**
- * Path B — one transaction. The memory revision and the ledger write are the same commit,
+ * Path B, one transaction. The memory revision and the ledger write are the same commit,
  * which is what `assertFact(..., { alongside })` exists for.
  *
  * `killBeforeCommit` injects the failure at the same logical instant path A is interrupted
@@ -288,8 +273,7 @@ export async function runDeferredExtraction(accountId: string) {
  */
 export async function runSingleTransaction(
   accountId: string,
-  opts: { killBeforeCommit?: boolean } = {},
-) {
+  opts: { killBeforeCommit?: boolean } = {}) {
   const idempotencyKey = `refund:async-window:${accountId}`
 
   try {
@@ -304,16 +288,13 @@ export async function runSingleTransaction(
           await c.query(
             `INSERT INTO ledger (account_id, amount_cents, kind, idempotency_key)
              VALUES ($1, $2, 'refund', $3)`,
-            [accountId, -WINDOW_AMOUNT_CENTS, idempotencyKey],
-          )
+            [accountId, -WINDOW_AMOUNT_CENTS, idempotencyKey])
           await c.query(
             `UPDATE accounts SET balance_cents = balance_cents - $2 WHERE id = $1`,
-            [accountId, WINDOW_AMOUNT_CENTS],
-          )
+            [accountId, WINDOW_AMOUNT_CENTS])
           if (opts.killBeforeCommit) throw new WorkerDied('worker died before commit')
         },
-      },
-    )
+      })
   } catch (err) {
     // Only the injected death is expected here. Anything else is a real failure and has to
     // reach the caller rather than be measured as an outcome.
@@ -328,17 +309,14 @@ async function measureWindow(
   accountId: string,
   path: string,
   label: string,
-  explanation: string,
-): Promise<WindowMeasurement> {
+  explanation: string): Promise<WindowMeasurement> {
   const led = await pool.query<{ n: number; debited: number }>(
     `SELECT count(*)::INT AS n, coalesce(-sum(amount_cents), 0)::INT AS debited
        FROM ledger WHERE account_id = $1`,
-    [accountId],
-  )
+    [accountId])
   const bal = await pool.query<{ balanceCents: number }>(
     `SELECT balance_cents AS "balanceCents" FROM accounts WHERE id = $1`,
-    [accountId],
-  )
+    [accountId])
   const memory = (await recallNow(accountId)).find((f) => f.key === 'last_refund')
 
   const balanceCents = bal.rows[0].balanceCents
@@ -379,22 +357,19 @@ export async function measureAsyncWindow(): Promise<AsyncWindowResult> {
       deferred,
       'A',
       'deferred extraction',
-      'the ledger is debited and nothing in memory records it: the process stopped inside the window between the two writes',
-    )
+      'the ledger is debited and nothing in memory records it: the process stopped inside the window between the two writes')
     const b = await measureWindow(
       single,
       'B',
       'one transaction',
-      'a single commit carries both, so there is no instant at which the ledger and the memory disagree',
-    )
+      'a single commit carries both, so there is no instant at which the ledger and the memory disagree')
     // The claim for path B is "both or neither", and a run that completes only shows the
     // first half. Interrupting it at the instant path A was interrupted at shows the other.
     const control = await measureWindow(
       killed,
       'B',
       'one transaction, interrupted at the same instant',
-      'the abort took the ledger write down with the memory revision: no debit, no memory, still in agreement',
-    )
+      'the abort took the ledger write down with the memory revision: no debit, no memory, still in agreement')
 
     return {
       amountCents: WINDOW_AMOUNT_CENTS,
@@ -414,8 +389,7 @@ export async function measureAsyncWindow(): Promise<AsyncWindowResult> {
 async function throwawayAccount(label: string) {
   const r = await pool.query<{ id: string }>(
     `INSERT INTO accounts (label, balance_cents) VALUES ($1, $2) RETURNING id`,
-    [label, WINDOW_OPENING_CENTS],
-  )
+    [label, WINDOW_OPENING_CENTS])
   return r.rows[0].id
 }
 

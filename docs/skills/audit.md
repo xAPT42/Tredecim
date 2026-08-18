@@ -21,7 +21,7 @@ SELECT current_user(),
   tredecim_app | 1
 ```
 
-The user in `DATABASE_URL` — the credential compiled into a public-facing web application —
+The user in `DATABASE_URL`, the credential compiled into a public-facing web application 
 could drop every table in the cluster. It got there the ordinary way: it is the user the
 provisioning flow creates, it was convenient for migrations, and nothing ever prompted a
 second look.
@@ -58,7 +58,7 @@ so the plan assertions in `verify` and `schema-check` are reading a planner with
 information rather than a stale one. No action.
 
 **`cockroachdb-sql` anti-patterns.** Checked for the ones it names. No table is without an
-explicit primary key. `facts` is keyed on `(entity_id, key, version)` — a natural composite
+explicit primary key. `facts` is keyed on `(entity_id, key, version)`, a natural composite
 rather than a sequence, so there is no monotonic insert hotspot. `UUID` for entity
 identifiers rather than `SERIAL`, for the same reason.
 
@@ -67,7 +67,7 @@ pre-split `facts` from a single range into roughly 3,700. That is the index doin
 a table whose row count does not remotely justify that many ranges on its own, and it is
 reported in the benchmark's `ranges` column so the cost is visible rather than surprising.
 
-**`designing-application-transactions`.** Its guidance matches what is already here —
+**`designing-application-transactions`.** Its guidance matches what is already here 
 retry on `40001` with exponential backoff and jitter, keep transactions short, take row
 locks in a consistent order. One place this project deliberately diverges: the pool is sized
 small for serverless, and a writer holds its connection while waiting on `FOR UPDATE`, so N

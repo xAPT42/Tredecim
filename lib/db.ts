@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 
 // CockroachDB's INT is 64-bit, so node-postgres hands back strings to avoid silently
-// truncating values beyond 2^53. Every integer in this schema — versions, counts, cents —
+// truncating values beyond 2^53. Every integer in this schema, versions, counts, cents 
 // is far inside the safe range, and comparing "1" to 1 is a bug waiting to happen.
 pg.types.setTypeParser(pg.types.builtins.INT8, (v) => {
   const n = Number(v)
@@ -28,7 +28,7 @@ function tlsConfig() {
   if (inline) return { ca: inline, rejectUnauthorized: true }
 
   // os.homedir() throws in some serverless sandboxes where HOME is unset, and a missing
-  // cert file is not an error worth crashing on — the system trust store covers Basic
+  // cert file is not an error worth crashing on, the system trust store covers Basic
   // clusters. Failing to read it must not take down the whole route.
   try {
     const local = path.join(os.homedir(), '.postgresql', 'root.crt')
@@ -53,7 +53,7 @@ export const pool =
     // is deliberately small. It has a consequence worth knowing: assertFact holds its
     // connection while waiting on FOR UPDATE, so N concurrent revisions of the same fact
     // need N connections. Past the pool size, writers queue at the pool rather than at
-    // the database and can time out there — which looks like a contention failure and is
+    // the database and can time out there, which looks like a contention failure and is
     // not one. Batch work (scripts/bench.ts, scripts/verify.ts) raises this.
     max: Number(process.env.PG_POOL_MAX ?? 4),
     idleTimeoutMillis: 10_000,
@@ -69,14 +69,13 @@ export type TxResult<T> = { value: T; latencyMs: number; retries: number }
  *
  * CockroachDB defaults to SERIALIZABLE, so concurrent agents touching the same
  * memory will genuinely conflict rather than silently interleave. Retrying is the
- * correct response to 40001 — the transaction is replayed against fresh state, not
+ * correct response to 40001, the transaction is replayed against fresh state, not
  * forced through. Every attempt is recorded so the console can show the aborts.
  */
 export async function tx<T>(
   label: string,
   fn: (c: PoolClient) => Promise<T>,
-  opts: { episodeId?: string; entityId?: string; maxRetries?: number } = {},
-): Promise<TxResult<T>> {
+  opts: { episodeId?: string; entityId?: string; maxRetries?: number } = {}): Promise<TxResult<T>> {
   const maxRetries = opts.maxRetries ?? 5
   const started = performance.now()
   let retries = 0
@@ -87,7 +86,7 @@ export async function tx<T>(
 
     // The outcome is recorded *after* the connection goes back to the pool. Journalling
     // while still holding it takes a second connection from the same pool, so N concurrent
-    // writers need 2N connections — and past the pool size that is a circular wait, with
+    // writers need 2N connections, and past the pool size that is a circular wait, with
     // every writer blocked on a connection only another writer's journal write can free.
     // The demo fires eight agents against a pool of four, so this is not theoretical.
     let outcome: { status: string; code: string | null; detail: string | null; ms: number } | null = null
@@ -139,15 +138,13 @@ async function journal(
   pgCode: string | null,
   detail: string | null,
   latencyMs: number,
-  opts: { episodeId?: string; entityId?: string },
-) {
+  opts: { episodeId?: string; entityId?: string }) {
   try {
     await pool.query(
       `INSERT INTO tx_journal (episode_id, entity_id, label, status, pg_code, detail, latency_ms)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [opts.episodeId ?? null, opts.entityId ?? null, label, status,
-       pgCode, detail?.slice(0, 300) ?? null, latencyMs],
-    )
+       pgCode, detail?.slice(0, 300) ?? null, latencyMs])
   } catch {
     /* observability must never take down the agent */
   }

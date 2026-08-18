@@ -43,7 +43,7 @@ browser open.
 |---|---|
 | `05-welcome` | The opening panel a first-time reader lands on |
 | `06`–`08` | Guided steps, each dimming everything it is not about |
-| `09-tour-divergence` | The two clocks disagreeing — a fact true in the world the agent did not know |
+| `09-tour-divergence` | The two clocks disagreeing, a fact true in the world the agent did not know |
 | `10-thirteen-relations` | Allen's thirteen, and which one the mark is |
 | `11-poison` | An untrusted source asserting a destination: recorded, then refused at payout |
 | `12-extraction-window` | The same refund run with deferred extraction and with one transaction |

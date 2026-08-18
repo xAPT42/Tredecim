@@ -29,7 +29,7 @@ production secret forever.
 - Confirming that `VECTOR(n)`, the `<=>` cosine operator and `CREATE VECTOR INDEX` exist on
   this cluster version (v26.2.5) before the schema depended on them
 - Reading `SHOW ZONE CONFIGURATION` to find the real `gc.ttlseconds`, which bounds how far
-  back `AS OF SYSTEM TIME` can read. The default turned out to be 4500s — 75 minutes, not
+  back `AS OF SYSTEM TIME` can read. The default turned out to be 4500s, 75 minutes, not
   the day the documentation had led us to assume. Raised to 86400s for the demo, and the
   `recorded_at` column exists precisely because the MVCC horizon is finite and audit is not
 - Checking that the partial unique index genuinely rejects a second open interval, rather
@@ -37,7 +37,7 @@ production secret forever.
 
 ## What it became: a drift detector
 
-Inspection during development was useful, but it is not an integration — it left the
+Inspection during development was useful, but it is not an integration, it left the
 project depending on a schema nobody re-checked. `npm run schema-check` turns that
 inspection into something that runs on demand and fails.
 
@@ -48,7 +48,7 @@ invisible in the DDL an application ships and visible only in the DDL a cluster 
 
 ```
 [3] facts_live_embedding_idx can actually serve semanticRecall
-  PASS  it is a VECTOR index — access method: cspann
+  PASS  it is a VECTOR index, access method: cspann
   PASS  it uses vector_cosine_ops
   PASS  it is partial on WHERE valid_to IS NULL
   PASS  no index on facts is hidden from the optimiser
@@ -66,7 +66,7 @@ plan is the only way to see it, and now something checks it.
 ## Why the hot path does not go through MCP
 
 The application connects over the regular PostgreSQL wire protocol with a scoped SQL user.
-MCP is a development and operations surface — excellent for letting an agent inspect a
+MCP is a development and operations surface, excellent for letting an agent inspect a
 cluster it does not own a driver for, and the wrong place to put a query that runs on every
 refund. `schema-check` uses the same governed read path over SQL when no service-account
 token is present, and reports which path it took rather than implying one it did not use.

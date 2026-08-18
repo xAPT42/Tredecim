@@ -28,7 +28,7 @@ const SCENARIOS = [
   { id: 'late-discovery', title: 'Learn something late',      claim: 'A fact true since before anyone noticed. The two clocks disagree.' },
   { id: 'stale-vector',   title: 'Stale-proof recall',        claim: 'A superseded fact still matches the query text, and is still unreachable.' },
   { id: 'async-window',   title: 'The extraction window',     claim: 'Deferred extraction debits the ledger and remembers nothing. One transaction agrees either way.' },
-  { id: 'poison',         title: 'Poison the memory',         claim: 'An untrusted source asserts a new destination. Recorded, then refused at payout — reset to pay again.' },
+  { id: 'poison',         title: 'Poison the memory',         claim: 'An untrusted source asserts a new destination. Recorded, then refused at payout, reset to pay again.' },
 ] as const
 
 /**
@@ -46,7 +46,7 @@ const TOUR = [
   {
     scenario: 'race' as const,
     heading: 'Eight agents, one refund',
-    body: 'One got through. The rest were refused with 23505, by the database itself — not by a check somebody could delete later.',
+    body: 'One got through. The rest were refused with 23505, by the database itself, not by a check somebody could delete later.',
     focus: 'journal' as const,
   },
   {
@@ -123,13 +123,11 @@ export default function Console() {
 
   const pct = useCallback(
     (t: number) => (window ? ((t - window.start) / (window.end - window.start)) * 100 : 0),
-    [window],
-  )
+    [window])
 
   const playheadAt = useMemo(
     () => (window ? new Date(window.start + ((window.end - window.start) * scrub) / 100) : null),
-    [window, scrub],
-  )
+    [window, scrub])
 
   async function post(body: Record<string, unknown>, key: string) {
     setBusy(key)
@@ -257,7 +255,7 @@ export default function Console() {
         <div className="working" role="status">
           <span className="working-bar" />
           <span className="label">
-            {busy === 'tour' ? 'running the scenario' : `running ${busy}`} — writing to the cluster
+            {busy === 'tour' ? 'running the scenario' : `running ${busy}`}, writing to the cluster
           </span>
         </div>
       )}
@@ -317,7 +315,7 @@ export default function Console() {
               <p>
                 A language model has no memory. Everything an agent appears to remember is
                 something the surrounding system chose to put back in the prompt. So the
-                question is never <em>can it recall this</em> — it is <strong>which version
+                question is never <em>can it recall this</em>, it is <strong>which version
                 of the truth does it recall, and how does it know that version is still good.</strong>
               </p>
               <p>
@@ -357,7 +355,7 @@ export default function Console() {
                 {busy === 'tour'
                   ? 'running…'
                   : tour === TOUR.length - 1
-                    ? 'Done — let me explore'
+                    ? 'Done, let me explore'
                     : 'Next →'}
               </button>
               <button className="link-quiet" style={{ marginLeft: 14 }} onClick={() => setTour(null)}>
@@ -381,7 +379,7 @@ export default function Console() {
             </div>
             <div>
               <div className="figure-value">
-                {m?.p50CommitMs == null ? '—' : m.p50CommitMs.toFixed(0)}
+                {m?.p50CommitMs == null ? ', ' : m.p50CommitMs.toFixed(0)}
                 {m?.p50CommitMs != null && <span className="figure-unit">ms</span>}
               </div>
               <div className="label" style={{ marginTop: 3 }}>p50 commit</div>
@@ -425,8 +423,7 @@ export default function Console() {
                   // instead, on whichever side has room.
                   const inside = width > 22
                   const next = row.intervals.find(
-                    (o) => new Date(o.validFrom).getTime() > from,
-                  )
+                    (o) => new Date(o.validFrom).getTime() > from)
                   const gap = next ? pct(new Date(next.validFrom).getTime()) - (left + width) : 100
                   const tip = `${f.statement}\nv${f.version} · ${f.source} · recorded ${clock(f.recordedAt)}`
                   return (
@@ -453,8 +450,7 @@ export default function Console() {
                       )}
                     </div>
                   )
-                }),
-              )}
+                }))}
 
               {playheadAt && (
                 <>
@@ -583,7 +579,7 @@ VALUES (…, NULL);
         <span className="mono" style={{ fontSize: 12 }}>
           what did you know at{' '}
           <span style={{ background: 'var(--open-wash)', padding: '1px 6px', borderRadius: 2 }}>
-            {playheadAt ? clock(playheadAt.toISOString()) : '—'}
+            {playheadAt ? clock(playheadAt.toISOString()) : ', '}
           </span>
           ?
         </span>
@@ -609,13 +605,13 @@ VALUES (…, NULL);
  *
  * Rendering them as three prose blocks made the point invisible: when the answers agree,
  * three identical lists read as repetition rather than as agreement. Here each key is one
- * row, and the cells that disagree are the ones that carry colour — so a divergence is
+ * row, and the cells that disagree are the ones that carry colour, so a divergence is
  * the thing the eye lands on, and its absence is legible too.
  */
 function Divergence({ data, onClose }: { data: Rewound; onClose: () => void }) {
   const keys = [...new Set([...data.wasTrue, ...data.wasKnown, ...data.current].map((f) => f.key))].sort()
   const pick = (rows: Fact[], key: string) => rows.find((f) => f.key === key)
-  const show = (f?: Fact) => (f ? `${JSON.stringify(f.value)} (v${f.version})` : '—')
+  const show = (f?: Fact) => (f ? `${JSON.stringify(f.value)} (v${f.version})` : ', ')
 
   const divergent = keys.filter((k) => show(pick(data.wasTrue, k)) !== show(pick(data.wasKnown, k)))
 
@@ -656,7 +652,7 @@ function Divergence({ data, onClose }: { data: Rewound; onClose: () => void }) {
         <p className="footnote">
           {divergent.length === 0 ? (
             <>
-              The two clocks agree at this instant — everything true had already been
+              The two clocks agree at this instant, everything true had already been
               recorded. Run <em>Learn something late</em> and rewind to about ten minutes
               ago to pull them apart.
             </>

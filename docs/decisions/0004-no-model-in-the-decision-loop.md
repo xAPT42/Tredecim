@@ -1,4 +1,4 @@
-# 0004 — No language model in the decision loop
+# 0004, No language model in the decision loop
 
 **Status:** accepted
 
@@ -16,7 +16,7 @@ between a recalled fact and a payout.
 
 The claim under test is that the memory layer keeps the agent correct. Routing money
 through a sampled token stream would add a second variable to every result, and a failure
-would be ambiguous between the two — a wrong payout could be bad memory or bad sampling, and
+would be ambiguous between the two, a wrong payout could be bad memory or bad sampling, and
 the test could not tell you which.
 
 It also makes the demonstration reproducible. "Eight agents race one refund and exactly one
@@ -31,6 +31,6 @@ loop. The README says so rather than letting a reader assume otherwise.
 ## Revisit if
 
 The interesting question becomes what an agent *decides* rather than what it *remembers*.
-The seam is already there — `decide()` returns a proposal, and `act()` re-validates it
+The seam is already there, `decide()` returns a proposal, and `act()` re-validates it
 against live memory before anything moves, so a model could replace the rules without
 touching the guarantees.

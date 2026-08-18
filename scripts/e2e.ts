@@ -22,7 +22,7 @@ const LOAD_MS = 60_000
 
 let failures = 0
 const check = (name: string, ok: boolean, detail = '') => {
-  console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`)
+  console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `, ${detail}` : ''}`)
   if (!ok) failures++
 }
 
@@ -97,7 +97,7 @@ async function dismissAnswer(page: Page) {
 
 /**
  * True once the console is idle again with an answer on screen. The page re-enables its
- * buttons only after reloading state, so this also means the DOM is no longer stale —
+ * buttons only after reloading state, so this also means the DOM is no longer stale 
  * which is why nothing here sleeps for a fixed interval.
  */
 const settled = (page: Page, timeout = SCENARIO_MS) =>
@@ -142,7 +142,7 @@ function stepStateEndpoint(status: number, body: Record<string, unknown>) {
 
 // ── 3 ────────────────────────────────────────────────────────────────────────
 // Run first, so the scenarios below start from a known baseline rather than from whatever
-// the last visitor left behind — and so the demo is left rich rather than empty.
+// the last visitor left behind, and so the demo is left rich rather than empty.
 async function stepReset(page: Page, index: number) {
   console.log('\n[3] Reset returns the demo to a clean baseline')
 
@@ -188,7 +188,7 @@ async function stepScenarios(page: Page, scenarios: { label: string; index: numb
       moved.length > 0 || after.answer.trim().length > 20,
       moved.length
         ? moved.join(', ')
-        : `answer panel only, ${after.answer.trim().length} chars — a read-only scenario`)
+        : `answer panel only, ${after.answer.trim().length} chars, a read-only scenario`)
   }
 }
 
@@ -293,7 +293,7 @@ async function launch(): Promise<Browser> {
 }
 
 async function main() {
-  console.log(`TREDECIM browser journey — ${BASE_URL}`)
+  console.log(`TREDECIM browser journey, ${BASE_URL}`)
 
   const browser = await launch()
   const page = watch(await browser.newPage({ viewport: { width: 1280, height: 800 } }))

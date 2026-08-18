@@ -1,5 +1,5 @@
 /**
- * The mark is relation one of Allen's interval algebra — `precedes`.
+ * The mark is relation one of Allen's interval algebra, `precedes`.
  * One interval ruled through, the next one open, the instant of the switch between them.
  */
 export function Mark({ size = 24 }: { size?: number }) {

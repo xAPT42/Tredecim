@@ -54,7 +54,7 @@ through creating billable infrastructure.
 `--no-redirect`, `--org` and `--vanity-name`, and even `--no-redirect` requires a human to
 fetch an authorization code from a browser. There is no API-key environment variable.
 
-Service-account keys — `ccloud service-account api-key create` — authenticate the Cloud
+Service-account keys, `ccloud service-account api-key create`, authenticate the Cloud
 REST API at `https://cockroachlabs.cloud/api/v1/` with an `Authorization: Bearer` header.
 They do not authenticate this CLI. Fully automated provisioning means calling that REST API
 directly rather than driving `ccloud`.
@@ -72,7 +72,7 @@ error: ccloud is not authenticated, and it cannot authenticate itself.
 ## Spend limits
 
 The defaults cap the cluster at exactly the free monthly allowance every pay-as-you-go
-organisation already receives — 50M Request Units and 10 GiB, together worth about $15 —
+organisation already receives, 50M Request Units and 10 GiB, together worth about $15 
 so the cluster cannot generate an invoice.
 
 Raise them if a demo needs headroom, and know what hitting them does: the storage limit

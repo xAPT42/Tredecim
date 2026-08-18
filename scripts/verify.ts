@@ -19,15 +19,14 @@ import {
 
 let failures = 0
 const check = (name: string, ok: boolean, detail = '') => {
-  console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`)
+  console.log(`  ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `, ${detail}` : ''}`)
   if (!ok) failures++
 }
 
 async function freshAccount(label: string) {
   const r = await pool.query<{ id: string }>(
     `INSERT INTO accounts (label, balance_cents) VALUES ($1, 100000) RETURNING id`,
-    [label],
-  )
+    [label])
   return r.rows[0].id
 }
 
@@ -42,12 +41,10 @@ async function claimOneOpenInterval() {
 
   const open = await pool.query(
     `SELECT count(*)::INT AS n FROM facts WHERE entity_id=$1 AND key='iban' AND valid_to IS NULL`,
-    [acct],
-  )
+    [acct])
   const all = await pool.query(
     `SELECT count(*)::INT AS n FROM facts WHERE entity_id=$1 AND key='iban'`,
-    [acct],
-  )
+    [acct])
   check('exactly one interval left open', open.rows[0].n === 1)
   check('the superseded interval is retained, not deleted', all.rows[0].n === 2)
 
@@ -57,8 +54,7 @@ async function claimOneOpenInterval() {
     await pool.query(
       `INSERT INTO facts (entity_id,key,version,value,statement,valid_from,source)
        VALUES ($1,'iban',99,'"FR99"','forced',now(),'inferred')`,
-      [acct],
-    )
+      [acct])
   } catch (e) {
     rejected = (e as { code?: string }).code === '23505'
   }
@@ -86,7 +82,7 @@ async function claimBitemporal(acct: string) {
   check('current value is the open interval', now.find((f) => f.key === 'iban')?.value === 'NEW')
   check('valid-time lookup returns the value in force then',
     then.find((f) => f.key === 'iban')?.value === 'OLD')
-  check('transaction-time lookup is empty — nothing was known yet at that instant',
+  check('transaction-time lookup is empty, nothing was known yet at that instant',
     known.length === 0,
     `${known.length} facts`)
 
@@ -137,8 +133,7 @@ async function claimNoDoublePayout() {
   const ev = await pool.query<{ id: string }>(
     `INSERT INTO events (entity_id, kind, payload)
      VALUES ($1,'refund.requested','{"amountCents":24000}') RETURNING id`,
-    [acct],
-  )
+    [acct])
   const eventId = ev.rows[0].id
 
   // Eight workers pick up the same event simultaneously.
@@ -147,18 +142,14 @@ async function claimNoDoublePayout() {
       startEpisode(eventId, acct, 'Refund 240.00 EUR', {
         kind: 'refund.requested',
         payload: { amountCents: 24000 },
-      }),
-    ),
-  )
+      })))
   const results = await Promise.allSettled(episodes.map((id) => runEpisode(id)))
 
   const paid = await pool.query<{ n: number }>(
     `SELECT count(*)::INT AS n FROM ledger WHERE idempotency_key = $1`,
-    [`refund:${eventId}`],
-  )
+    [`refund:${eventId}`])
   const balance = await pool.query<{ balance_cents: string }>(
-    `SELECT balance_cents FROM accounts WHERE id = $1`, [acct],
-  )
+    `SELECT balance_cents FROM accounts WHERE id = $1`, [acct])
   const rejected = results.filter((r) => r.status === 'rejected').length
 
   check('exactly one ledger entry exists', paid.rows[0].n === 1, `${paid.rows[0].n} entries`)
@@ -170,8 +161,7 @@ async function claimNoDoublePayout() {
   const journal = await pool.query<{ status: string; n: number }>(
     `SELECT status, count(*)::INT AS n FROM tx_journal
       WHERE episode_id = ANY($1) GROUP BY status`,
-    [episodes],
-  )
+    [episodes])
   console.log(`        journal: ${journal.rows.map((r) => `${r.status}=${r.n}`).join(' ')}`)
 }
 
@@ -185,8 +175,7 @@ async function claimCrashRecovery() {
   const ev = await pool.query<{ id: string }>(
     `INSERT INTO events (entity_id, kind, payload)
      VALUES ($1,'refund.requested','{"amountCents":15000}') RETURNING id`,
-    [acct],
-  )
+    [acct])
   const episodeId = await startEpisode(ev.rows[0].id, acct, 'Refund 150.00 EUR', {
     kind: 'refund.requested',
     payload: { amountCents: 15000 },
@@ -197,23 +186,19 @@ async function claimCrashRecovery() {
     `UPDATE episodes SET step='act', scratch = scratch || $2::JSONB WHERE id=$1`,
     [episodeId, JSON.stringify({
       decision: { action: 'refund', amountCents: 15000, destination: 'FR76…4412' },
-    })],
-  )
+    })])
 
   const before = await pool.query<{ step: string; status: string }>(
-    `SELECT step, status FROM episodes WHERE id=$1`, [episodeId],
-  )
+    `SELECT step, status FROM episodes WHERE id=$1`, [episodeId])
   check('episode is parked at the act step', before.rows[0].step === 'act')
 
   const resumed = await resumeOrphaned(0)
   check('recovery sweep picked it up', resumed.includes(episodeId))
 
   const after = await pool.query<{ status: string; outcome: { paid?: boolean } }>(
-    `SELECT status, outcome FROM episodes WHERE id=$1`, [episodeId],
-  )
+    `SELECT status, outcome FROM episodes WHERE id=$1`, [episodeId])
   const paid = await pool.query<{ n: number }>(
-    `SELECT count(*)::INT AS n FROM ledger WHERE episode_id=$1`, [episodeId],
-  )
+    `SELECT count(*)::INT AS n FROM ledger WHERE episode_id=$1`, [episodeId])
   check('episode completed after recovery', after.rows[0].status === 'done')
   check('the payout happened exactly once', paid.rows[0].n === 1, `${paid.rows[0].n} entries`)
 }
@@ -256,8 +241,7 @@ async function claimDecisionRevalidated() {
   const ev = await pool.query<{ id: string }>(
     `INSERT INTO events (entity_id, kind, payload)
      VALUES ($1,'refund.requested','{"amountCents":20000}') RETURNING id`,
-    [acct],
-  )
+    [acct])
   const episodeId = await startEpisode(ev.rows[0].id, acct, 'Refund 200.00 EUR', {
     kind: 'refund.requested',
     payload: { amountCents: 20000 },
@@ -271,8 +255,7 @@ async function claimDecisionRevalidated() {
         action: 'refund', amountCents: 20000,
         destination: 'OLD-DESTINATION', destinationVersion: 1,
       },
-    })],
-  )
+    })])
 
   // The customer changes their bank details while the episode is parked.
   await assertFact(acct, 'iban', 'NEW-DESTINATION', 'Destination account is NEW-DESTINATION')
@@ -280,11 +263,9 @@ async function claimDecisionRevalidated() {
   await runEpisode(episodeId)
 
   const paid = await pool.query<{ n: number; kind: string }>(
-    `SELECT count(*)::INT AS n FROM ledger WHERE episode_id = $1`, [episodeId],
-  )
+    `SELECT count(*)::INT AS n FROM ledger WHERE episode_id = $1`, [episodeId])
   const outcome = await pool.query<{ outcome: { paid?: boolean; destination?: string } }>(
-    `SELECT outcome FROM episodes WHERE id = $1`, [episodeId],
-  )
+    `SELECT outcome FROM episodes WHERE id = $1`, [episodeId])
   const facts = await recallNow(acct)
 
   check('the stale destination was never paid',
@@ -303,8 +284,7 @@ async function claimDecisionRevalidated() {
   const ev2 = await pool.query<{ id: string }>(
     `INSERT INTO events (entity_id, kind, payload)
      VALUES ($1,'refund.requested','{"amountCents":9000}') RETURNING id`,
-    [acct2],
-  )
+    [acct2])
   const ep2 = await startEpisode(ev2.rows[0].id, acct2, 'Refund 90.00 EUR', {
     kind: 'refund.requested', payload: { amountCents: 9000 },
   })
@@ -312,14 +292,12 @@ async function claimDecisionRevalidated() {
     `UPDATE episodes SET step='act', scratch = scratch || $2::JSONB WHERE id=$1`,
     [ep2, JSON.stringify({
       decision: { action: 'refund', amountCents: 9000, destination: 'DEST', destinationVersion: 1 },
-    })],
-  )
+    })])
   await assertFact(acct2, 'account_frozen', true, 'Account is frozen and cannot receive payouts')
   await runEpisode(ep2)
 
   const paid2 = await pool.query<{ n: number }>(
-    `SELECT count(*)::INT AS n FROM ledger WHERE episode_id = $1`, [ep2],
-  )
+    `SELECT count(*)::INT AS n FROM ledger WHERE episode_id = $1`, [ep2])
   check('a freeze landing after the decision blocks the payout', paid2.rows[0].n === 0,
     `${paid2.rows[0].n} entries`)
 }
@@ -334,8 +312,7 @@ async function claimVectorIndexIsUsed() {
   const plan = await pool.query<{ info: string }>(
     `EXPLAIN SELECT statement FROM facts
       WHERE valid_to IS NULL ORDER BY embedding <=> $1 LIMIT 5`,
-    [probe],
-  )
+    [probe])
   const text = plan.rows.map((r) => r.info).join('\n')
 
   check('the live recall path uses the index rather than scanning',
@@ -344,8 +321,7 @@ async function claimVectorIndexIsUsed() {
   check('and it is the partial index that serves it', /partial index/.test(text))
 
   const ddl = await pool.query<{ create_statement: string }>(
-    `SELECT create_statement FROM [SHOW CREATE TABLE facts]`,
-  )
+    `SELECT create_statement FROM [SHOW CREATE TABLE facts]`)
   const stmt = ddl.rows[0].create_statement
   check('declared with the cosine operator class',
     /vector_cosine_ops/.test(stmt),
@@ -360,8 +336,7 @@ async function claimVectorIndexIsUsed() {
     `EXPLAIN SELECT statement FROM facts
       WHERE valid_from <= now() AND (valid_to IS NULL OR valid_to > now())
       ORDER BY embedding <=> $1 LIMIT 5`,
-    [probe],
-  )
+    [probe])
   console.log(`        as-of recall plan: ${
     /FULL SCAN/.test(past.rows.map((r) => r.info).join('')) ? 'full scan (documented)' : 'indexed'
   }`)
@@ -376,16 +351,14 @@ async function claimRapidRevisions() {
 
   const results = await Promise.allSettled(
     Array.from({ length: 12 }, (_, i) =>
-      assertFact(acct, 'iban', `FR-${i}`, `Destination account is FR-${i}`)),
-  )
+      assertFact(acct, 'iban', `FR-${i}`, `Destination account is FR-${i}`)))
   const committed = results.filter((r) => r.status === 'fulfilled').length
   const line = await lifeline(acct)
   const open = line.filter((f) => f.validTo === null).length
 
   // Two revisions inside one clock tick would close an interval at the instant it opened.
   const degenerate = line.filter(
-    (f) => f.validTo !== null && new Date(f.validTo) <= new Date(f.validFrom),
-  ).length
+    (f) => f.validTo !== null && new Date(f.validTo) <= new Date(f.validFrom)).length
 
   check('every writer committed', committed === 12, `${committed}/12`)
   check('no zero-length interval was produced', degenerate === 0, `${degenerate} degenerate`)
@@ -404,7 +377,7 @@ async function claimTrustEnforced() {
   const poisoned = await freshAccount('poisoned')
   await assertFact(poisoned, 'iban', 'TRUSTED-DEST', 'Destination account is TRUSTED-DEST')
   // Someone simply claims a new account number. The statement is the same sentence a real
-  // revision writes — only the provenance differs, which is the entire point.
+  // revision writes, only the provenance differs, which is the entire point.
   await assertFact(poisoned, 'iban', 'ATTACKER-DEST', 'Destination account is ATTACKER-DEST', {
     source: 'user_asserted', confidence: 0.4,
   })
@@ -414,11 +387,9 @@ async function claimTrustEnforced() {
     paid?: boolean; refused?: string; source?: string; destination?: string
   }
   const ledger = await pool.query<{ n: number }>(
-    `SELECT count(*)::INT AS n FROM ledger WHERE account_id = $1`, [poisoned],
-  )
+    `SELECT count(*)::INT AS n FROM ledger WHERE account_id = $1`, [poisoned])
   const balance = await pool.query<{ balance_cents: string }>(
-    `SELECT balance_cents FROM accounts WHERE id = $1`, [poisoned],
-  )
+    `SELECT balance_cents FROM accounts WHERE id = $1`, [poisoned])
 
   check('a user_asserted destination is never paid to', out.paid !== true,
     `outcome paid=${out.paid} to ${out.destination}`)
@@ -428,12 +399,12 @@ async function claimTrustEnforced() {
     out.refused === 'untrusted_destination' && out.source === 'user_asserted',
     `${out.refused} / ${out.source}`)
   // The refusal happened inside the transaction that would have paid, so the agent also
-  // has no memory of paying — the two roll back together or not at all.
+  // has no memory of paying, the two roll back together or not at all.
   check('and the agent holds no memory of a refund it did not make',
     !(await recallNow(poisoned)).some((f) => f.key === 'last_refund'))
 
   // Recording and acting are different questions. Refusing to *record* the claim would
-  // throw away the only evidence of the attack, so the fact is in memory — and the history
+  // throw away the only evidence of the attack, so the fact is in memory, and the history
   // is what makes it answerable afterwards.
   const line = (await lifeline(poisoned)).filter((f) => f.key === 'iban')
   const open = line.find((f) => f.validTo === null)!
@@ -467,8 +438,8 @@ async function claimTrustEnforced() {
     paidOut.paid === true && paidOut.destination === 'VERIFIED-DEST',
     `paid=${paidOut.paid} to ${paidOut.destination}`)
 
-  // Source is not the whole policy. A tool that reports its own uncertainty — a fuzzy match
-  // against a bank record, an OCR read of a mandate — is tool_verified and still not
+  // Source is not the whole policy. A tool that reports its own uncertainty, a fuzzy match
+  // against a bank record, an OCR read of a mandate, is tool_verified and still not
   // evidence enough to move money.
   const hedged = await freshAccount('below-floor')
   await assertFact(hedged, 'iban', 'FUZZY-DEST', 'Destination account is FUZZY-DEST', {
@@ -486,8 +457,7 @@ async function claimTrustEnforced() {
   const ev = await pool.query<{ id: string }>(
     `INSERT INTO events (entity_id, kind, payload)
      VALUES ($1,'refund.requested','{"amountCents":20000}') RETURNING id`,
-    [parked],
-  )
+    [parked])
   const episodeId = await startEpisode(ev.rows[0].id, parked, 'Refund 200.00 EUR', {
     kind: 'refund.requested', payload: { amountCents: 20000 },
   })
@@ -498,8 +468,7 @@ async function claimTrustEnforced() {
         action: 'refund', amountCents: 20000,
         destination: 'TRUSTED-DEST', destinationVersion: 1,
       },
-    })],
-  )
+    })])
   // The poison lands while the episode is parked between deciding and acting.
   await assertFact(parked, 'iban', 'ATTACKER-DEST', 'Destination account is ATTACKER-DEST', {
     source: 'user_asserted', confidence: 0.4,
@@ -507,15 +476,12 @@ async function claimTrustEnforced() {
   await runEpisode(episodeId)
 
   const parkedLedger = await pool.query<{ n: number }>(
-    `SELECT count(*)::INT AS n FROM ledger WHERE account_id = $1`, [parked],
-  )
+    `SELECT count(*)::INT AS n FROM ledger WHERE account_id = $1`, [parked])
   const parkedOut = await pool.query<{ outcome: { paid?: boolean; refused?: string } }>(
-    `SELECT outcome FROM episodes WHERE id = $1`, [episodeId],
-  )
+    `SELECT outcome FROM episodes WHERE id = $1`, [episodeId])
   const aborted = await pool.query<{ n: number }>(
     `SELECT count(*)::INT AS n FROM tx_journal WHERE episode_id = $1 AND status = 'abort'`,
-    [episodeId],
-  )
+    [episodeId])
 
   check('a fact trusted at decision time and superseded by an untrusted one is caught',
     parkedLedger.rows[0].n === 0, `${parkedLedger.rows[0].n} entries`)
@@ -530,7 +496,7 @@ async function claimTrustEnforced() {
 // ── 11 ───────────────────────────────────────────────────────────────────────
 // Extracting memory in a background pass after the business write is a legitimate design:
 // it keeps the memory write off the request path, and under load that is worth having. It
-// also has a consequence worth measuring rather than debating — between the two commits
+// also has a consequence worth measuring rather than debating, between the two commits
 // the ledger and the memory disagree, and a process that stops in there leaves them that
 // way. The same refund runs down both paths below, and every outcome is read out of the
 // database by this script rather than taken from what either path reported.
@@ -570,7 +536,7 @@ async function claimMoneyAndMemoryCommitTogether() {
     !c.memoryRecords)
   check('interrupted before commit: the two still agree', c.moneyMoved === c.memoryRecords)
 
-  // The scenario the console runs is the thing under test, not a second copy of it — and
+  // The scenario the console runs is the thing under test, not a second copy of it, and
   // it must leave the demo account and the cluster exactly as it found them.
   const demoBefore = await demoFootprint()
   const measured = await measureAsyncWindow()
@@ -588,8 +554,7 @@ async function claimMoneyAndMemoryCommitTogether() {
     `moved=${measured.control.moneyMoved} recorded=${measured.control.memoryRecords}`)
   check('the scenario left none of its throwaway accounts behind',
     (await pool.query<{ n: number }>(
-      `SELECT count(*)::INT AS n FROM accounts WHERE label LIKE 'async-window%'`,
-    )).rows[0].n === 0)
+      `SELECT count(*)::INT AS n FROM accounts WHERE label LIKE 'async-window%'`)).rows[0].n === 0)
   check('and did not touch the demo account', demoBefore === demoAfter,
     `${demoBefore} → ${demoAfter}`)
 }
@@ -597,11 +562,9 @@ async function claimMoneyAndMemoryCommitTogether() {
 /** Read by this script directly, so the comparison rests on the database, not on lib/demo. */
 async function moneyAndMemory(accountId: string) {
   const led = await pool.query<{ n: number }>(
-    `SELECT count(*)::INT AS n FROM ledger WHERE account_id = $1`, [accountId],
-  )
+    `SELECT count(*)::INT AS n FROM ledger WHERE account_id = $1`, [accountId])
   const bal = await pool.query<{ balance_cents: number }>(
-    `SELECT balance_cents FROM accounts WHERE id = $1`, [accountId],
-  )
+    `SELECT balance_cents FROM accounts WHERE id = $1`, [accountId])
   const facts = await recallNow(accountId)
   const balanceCents = Number(bal.rows[0].balance_cents)
 
@@ -617,13 +580,12 @@ async function demoFootprint() {
   const r = await pool.query<{ ledger: number; facts: number }>(
     `SELECT (SELECT count(*)::INT FROM ledger WHERE account_id = $1) AS ledger,
             (SELECT count(*)::INT FROM facts  WHERE entity_id  = $1) AS facts`,
-    [DEMO_ACCOUNT],
-  )
+    [DEMO_ACCOUNT])
   return `${r.rows[0].ledger} ledger / ${r.rows[0].facts} facts`
 }
 
 async function main() {
-  console.log(`TREDECIM verification — embeddings: ${activeProvider()}`)
+  console.log(`TREDECIM verification, embeddings: ${activeProvider()}`)
   const acct = await claimOneOpenInterval()
   const acct2 = await claimBitemporal(acct)
   await claimSemanticRespectsTime(acct2)

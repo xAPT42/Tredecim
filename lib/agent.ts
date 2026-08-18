@@ -8,14 +8,14 @@ export type Step = 'recall' | 'decide' | 'act' | 'done'
  * Provenance floor for moving money.
  *
  * A destination account reaches this memory one of two ways: from a bank-side tool call
- * that checked it (`tool_verified`), or from somebody saying so — a caller on the phone,
+ * that checked it (`tool_verified`), or from somebody saying so, a caller on the phone,
  * a line in a chat transcript, a model's own inference. Only the first is evidence, so the
  * source test is the load-bearing half and it is absolute: no confidence value promotes a
  * `user_asserted` account number into a payable one.
  *
  * The floor then applies *within* the trusted source, because `tool_verified` does not mean
  * certain. A fuzzy match against a bank record, an OCR read of a mandate, a provider that
- * answers "probably" — all legitimately land below 1.0. This sits just under the 1.0 a
+ * answers "probably", all legitimately land below 1.0. This sits just under the 1.0 a
  * clean verification writes, so a tool that hedges at all stops the payout and asks for a
  * human instead of guessing with someone else's money.
  *
@@ -90,7 +90,7 @@ export async function runEpisode(episodeId: string): Promise<Episode> {
  *
  * The decision this produces is a *proposal*, not an authorisation. It is computed from
  * facts read during the recall step, and an episode can sit checkpointed between deciding
- * and acting for an unbounded time — that is the whole point of durable execution. `act`
+ * and acting for an unbounded time, that is the whole point of durable execution. `act`
  * re-validates against the live memory before any money moves.
  */
 function decide(ep: Episode): Record<string, unknown> {
@@ -154,7 +154,7 @@ async function act(ep: Episode) {
       const idempotencyKey = `refund:${ep.eventId}`
 
       // The payout and the memory of having paid out commit together. If the ledger
-      // write is rejected — because another agent already paid this request — the memory
+      // write is rejected, because another agent already paid this request, the memory
       // revision is rolled back with it. The agent cannot come to believe it refunded
       // something it did not.
       try {
@@ -171,15 +171,12 @@ async function act(ep: Episode) {
               await c.query(
                 `INSERT INTO ledger (account_id, amount_cents, kind, idempotency_key, episode_id)
                  VALUES ($1, $2, 'refund', $3, $4)`,
-                [ep.entityId, -amount, idempotencyKey, ep.id],
-              )
+                [ep.entityId, -amount, idempotencyKey, ep.id])
               await c.query(
                 `UPDATE accounts SET balance_cents = balance_cents - $2 WHERE id = $1`,
-                [ep.entityId, amount],
-              )
+                [ep.entityId, amount])
             },
-          },
-        )
+          })
       } catch (err) {
         if (err instanceof UntrustedDestination) {
           // Nothing was written: the trust check ran inside the same transaction as the
@@ -199,12 +196,11 @@ async function act(ep: Episode) {
           return
         }
         if (err instanceof StaleDecision) {
-          // The memory moved between deciding and acting. Nothing was written — send the
+          // The memory moved between deciding and acting. Nothing was written, send the
           // episode back to recall so it decides again against what is true now.
           await pool.query(
             `UPDATE episodes SET step = 'recall', updated_at = now() WHERE id = $1`,
-            [ep.id],
-          )
+            [ep.id])
           await runEpisode(ep.id)
           return
         }
@@ -221,8 +217,7 @@ async function act(ep: Episode) {
         String(decision.key),
         decision.value,
         String(decision.statement),
-        { episodeId: ep.id, source: 'tool_verified' },
-      )
+        { episodeId: ep.id, source: 'tool_verified' })
       await finish(ep.id, { revised: decision.key })
       return
     }
@@ -244,7 +239,7 @@ class StaleDecision extends Error {
  *
  * Deliberately not a subclass of StaleDecision, because the two want opposite handling.
  * A stale decision is repaired by deciding again against current memory, so the episode
- * goes back to recall. An untrusted destination is not repaired by looking again — the
+ * goes back to recall. An untrusted destination is not repaired by looking again, the
  * second decision would read the same untrusted fact and arrive here once more, which is
  * a loop, not a retry. This one ends the episode, refused, with the provenance that
  * refused it recorded in the outcome.
@@ -252,8 +247,7 @@ class StaleDecision extends Error {
 class UntrustedDestination extends Error {
   constructor(
     readonly reason: string,
-    readonly fact: { value: unknown; version: number; source: Source; confidence: number },
-  ) {
+    readonly fact: { value: unknown; version: number; source: Source; confidence: number }) {
     super(`refusing to move money: ${reason}`)
   }
 }
@@ -264,13 +258,13 @@ class UntrustedDestination extends Error {
  *
  * Without this, `decide` and `act` are separated by a durable checkpoint of unbounded
  * duration: a customer who changes their bank details in that window would be paid at
- * the account they just replaced. Reading the fact again is not enough — it has to be
+ * the account they just replaced. Reading the fact again is not enough, it has to be
  * read under FOR UPDATE in the same transaction as the ledger write, so that a
  * concurrent revision either waits for this payout or forces it to abort.
  *
  * Provenance is checked in the same breath, and for the same reason. A decision made
  * against a tool-verified account is worth nothing if an untrusted revision lands while
- * the episode sits parked — the fact the money would actually go to is the live one, so
+ * the episode sits parked, the fact the money would actually go to is the live one, so
  * the live one is what has to be trusted. Checking trust in `decide` would read a fact
  * that no longer exists by the time the ledger is written.
  */
@@ -281,8 +275,7 @@ async function assertStillValid(c: PoolClient, ep: Episode, decision: Record<str
     `SELECT key, value, version::INT AS version, source, confidence FROM facts
       WHERE entity_id = $1 AND key IN ('iban', 'account_frozen') AND valid_to IS NULL
       FOR UPDATE`,
-    [ep.entityId],
-  )
+    [ep.entityId])
   const live = new Map(r.rows.map((f) => [f.key, f]))
 
   const iban = live.get('iban')
@@ -294,20 +287,18 @@ async function assertStillValid(c: PoolClient, ep: Episode, decision: Record<str
   // changed" would send the episode back to recall to re-derive the same refusal.
   //
   // Note that the test runs in one direction only. Trust is required to *move* money, not
-  // to withhold it — an unverified claim that an account is frozen still stops the payout
+  // to withhold it, an unverified claim that an account is frozen still stops the payout
   // below, because the failure modes are not symmetric.
   if (iban.source !== 'tool_verified' || iban.confidence < PAYOUT_CONFIDENCE_FLOOR) {
     throw new UntrustedDestination(
       `destination v${iban.version} is ${iban.source} at confidence ${iban.confidence}; ` +
         `payouts require tool_verified at ${PAYOUT_CONFIDENCE_FLOOR} or above`,
-      iban,
-    )
+      iban)
   }
 
   if (iban.value !== decision.destination) {
     throw new StaleDecision(
-      `destination changed from ${JSON.stringify(decision.destination)} to ${JSON.stringify(iban.value)}`,
-    )
+      `destination changed from ${JSON.stringify(decision.destination)} to ${JSON.stringify(iban.value)}`)
   }
   if (iban.version !== decision.destinationVersion) {
     throw new StaleDecision(`destination revised to v${iban.version}`)
@@ -323,8 +314,7 @@ export async function startEpisode(eventId: string, entityId: string, goal: stri
   const r = await pool.query<{ id: string }>(
     `INSERT INTO episodes (event_id, entity_id, goal, scratch)
      VALUES ($1, $2, $3, $4) RETURNING id`,
-    [eventId, entityId, goal, JSON.stringify({ event })],
-  )
+    [eventId, entityId, goal, JSON.stringify({ event })])
   return r.rows[0].id
 }
 
@@ -337,8 +327,7 @@ async function loadEpisode(id: string): Promise<Episode | null> {
 async function checkpoint(id: string, step: Step, scratch: Record<string, unknown>) {
   await pool.query(
     `UPDATE episodes SET step = $2, scratch = $3, updated_at = now() WHERE id = $1`,
-    [id, step, JSON.stringify(scratch)],
-  )
+    [id, step, JSON.stringify(scratch)])
 }
 
 async function finish(id: string, outcome: unknown) {
@@ -347,8 +336,7 @@ async function finish(id: string, outcome: unknown) {
         SET status = 'done', step = 'done', outcome = $2,
             finished_at = now(), updated_at = now()
       WHERE id = $1`,
-    [id, JSON.stringify(outcome)],
-  )
+    [id, JSON.stringify(outcome)])
 }
 
 /**
@@ -360,8 +348,7 @@ export async function resumeOrphaned(olderThanSeconds = 0): Promise<string[]> {
     `SELECT id FROM episodes
       WHERE status = 'running' AND updated_at < now() - $1::INTERVAL
       ORDER BY updated_at`,
-    [`${olderThanSeconds} seconds`],
-  )
+    [`${olderThanSeconds} seconds`])
 
   const resumed: string[] = []
   for (const { id } of r.rows) {
@@ -371,8 +358,7 @@ export async function resumeOrphaned(olderThanSeconds = 0): Promise<string[]> {
     } catch (err) {
       await pool.query(
         `UPDATE episodes SET status = 'failed', outcome = $2, updated_at = now() WHERE id = $1`,
-        [id, JSON.stringify({ error: (err as Error).message })],
-      )
+        [id, JSON.stringify({ error: (err as Error).message })])
     }
   }
   return resumed
@@ -382,8 +368,7 @@ export async function resumeOrphaned(olderThanSeconds = 0): Promise<string[]> {
 export async function handleEvent(entityId: string, kind: string, payload: Record<string, unknown>) {
   const ev = await pool.query<{ id: string }>(
     `INSERT INTO events (entity_id, kind, payload) VALUES ($1, $2, $3) RETURNING id`,
-    [entityId, kind, JSON.stringify(payload)],
-  )
+    [entityId, kind, JSON.stringify(payload)])
   const eventId = ev.rows[0].id
   const goal = goalFor(kind, payload)
   const episodeId = await startEpisode(eventId, entityId, goal, { kind, payload })

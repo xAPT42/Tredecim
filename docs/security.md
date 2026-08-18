@@ -2,7 +2,7 @@
 
 ## Credential separation
 
-The application user held admin. It got there the ordinary way — it is the user the
+The application user held admin. It got there the ordinary way, it is the user the
 provisioning flow creates, it was convenient for migrations, and nothing prompted a second
 look until a skill from the CockroachDB Agent Skills repository asked the question directly.
 
@@ -31,7 +31,7 @@ could still create tables until that was revoked explicitly.
 
 ## Secrets
 
-`.env*` is ignored, with `.env.example` exempted — it carries a template and no values.
+`.env*` is ignored, with `.env.example` exempted, it carries a template and no values.
 
 The hosting platform exposes console-configured variables to the build container and not to
 the SSR runtime, so runtime configuration is inlined into the compiled server output. That
