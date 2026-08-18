@@ -1,0 +1,289 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" width="1200" height="800"
+     preserveAspectRatio="xMidYMid meet" role="img" aria-labelledby="ttl dsc"
+     style="width:100%;height:auto;max-width:1200px"
+     font-family="ui-sans-serif,system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif">
+  <title id="ttl">TREDECIM architecture</title>
+  <desc id="dsc">An event starts a durable episode. Recall, decide and act are checkpointed to CockroachDB. Before money moves the decision is re-validated under FOR UPDATE, and the memory revision (closing one interval, opening the next on the facts table) commits in the same serializable transaction as the ledger insert and the balance update. A partial vector index over WHERE valid_to IS NULL serves semantic recall. Amazon Bedrock Titan Embed v2 supplies embeddings only and is not in the decision loop.</desc>
+
+  <!-- ─── page ─────────────────────────────────────────────────────────── -->
+  <rect x="0" y="0" width="1200" height="800" fill="#F4F0E8"/>
+  <rect x="0.5" y="0.5" width="1199" height="799" fill="none" stroke="#DDD6C7" stroke-width="1"/>
+
+  <!-- ─── masthead ─────────────────────────────────────────────────────── -->
+  <text x="40" y="44" font-family="Georgia,'Times New Roman',Times,serif" font-size="26"
+        letter-spacing="2.6" fill="#1A1F2B">TREDECIM</text>
+  <line x1="216" y1="24" x2="216" y2="48" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="230" y="41" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9.5" letter-spacing="1.7" fill="#8A8371">BITEMPORAL MEMORY FOR AI AGENTS · ALLEN, 1983</text>
+  <text x="40" y="70" font-size="12.5" fill="#1A1F2B">An event starts an episode. Every step is checkpointed. The memory revision and the money move commit in one transaction.</text>
+
+  <!-- the mark: one interval closing as the next opens -->
+  <line x1="1095" y1="26" x2="1095" y2="74" stroke="#1A1F2B" stroke-width="1" stroke-dasharray="3 3" opacity="0.5"/>
+  <line x1="1038" y1="39" x2="1104" y2="39" stroke="#8C2F39" stroke-width="3.6" stroke-linecap="round"/>
+  <line x1="1086" y1="61" x2="1156" y2="61" stroke="#1F4E5F" stroke-width="3.6" stroke-linecap="round"/>
+  <text x="1030" y="42.5" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="8.5" letter-spacing="1" fill="#8C2F39">V1 · CLOSED</text>
+  <text x="1030" y="64.5" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="8.5" letter-spacing="1" fill="#1F4E5F">V2 · IN FORCE</text>
+
+  <line x1="40" y1="84" x2="1160" y2="84" stroke="#1A1F2B" stroke-width="1.5"/>
+  <line x1="40" y1="88" x2="1160" y2="88" stroke="#DDD6C7" stroke-width="0.8"/>
+
+  <!-- ─── 01 event · 02 episode ─────────────────────────────────────────── -->
+  <text x="40" y="106" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9" letter-spacing="1.6" fill="#8A8371">01 EVENT</text>
+  <text x="206" y="106" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9" letter-spacing="1.6" fill="#8A8371">02 EPISODE · DURABLE STATE, NOTHING IN PROCESS MEMORY</text>
+
+  <rect x="40" y="116" width="140" height="76" fill="#FBF9F5" stroke="#DDD6C7" stroke-width="1"/>
+  <rect x="40" y="116" width="2.5" height="76" fill="#1A1F2B"/>
+  <text x="53" y="138" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="#1A1F2B">refund.requested</text>
+  <text x="53" y="154" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="#8A8371">amountCents 12000</text>
+  <line x1="53" y1="164" x2="168" y2="164" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="53" y="180" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="#8A8371">INSERT INTO events</text>
+
+  <line x1="182" y1="154" x2="199" y2="154" stroke="#1A1F2B" stroke-width="1.2"/>
+  <path d="M206 154 L198.5 150.2 L198.5 157.8 Z" fill="#1A1F2B"/>
+
+  <rect x="206" y="116" width="190" height="76" fill="#FBF9F5" stroke="#DDD6C7" stroke-width="1"/>
+  <rect x="206" y="116" width="2.5" height="76" fill="#1F4E5F"/>
+  <text x="219" y="137" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="#1A1F2B">recall</text>
+  <text x="219" y="154" font-size="10.2" fill="#1A1F2B">current facts + nearest neighbours</text>
+  <text x="219" y="170" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="#1F4E5F">WHERE valid_to IS NULL</text>
+  <text x="219" y="184" font-size="9.5" fill="#8A8371">served by the partial vector index</text>
+
+  <line x1="398" y1="154" x2="411" y2="154" stroke="#1A1F2B" stroke-width="1.2"/>
+  <path d="M418 154 L410.5 150.2 L410.5 157.8 Z" fill="#1A1F2B"/>
+
+  <rect x="418" y="116" width="182" height="76" fill="#FBF9F5" stroke="#DDD6C7" stroke-width="1"/>
+  <rect x="418" y="116" width="2.5" height="76" fill="#1A1F2B"/>
+  <text x="431" y="137" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="#1A1F2B">decide</text>
+  <text x="431" y="154" font-size="10.2" fill="#1A1F2B">rule-based policy</text>
+  <text x="431" y="170" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="#8A8371">no model in the loop</text>
+  <text x="431" y="184" font-size="9.5" fill="#8A8371">a proposal, not an authorisation</text>
+
+  <line x1="602" y1="154" x2="611" y2="154" stroke="#1A1F2B" stroke-width="1.2"/>
+  <path d="M618 154 L610.5 150.2 L610.5 157.8 Z" fill="#1A1F2B"/>
+
+  <!-- ─── bedrock: embeddings only ──────────────────────────────────────── -->
+  <rect x="40" y="210" width="260" height="78" fill="#FBF9F5" stroke="#DDD6C7" stroke-width="1"/>
+  <rect x="40" y="210" width="2.5" height="78" fill="#8A8371"/>
+  <text x="53" y="231" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10.5" fill="#1A1F2B">Amazon Bedrock</text>
+  <text x="53" y="245" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="#8A8371">Titan Text Embeddings v2 · 1024-dim</text>
+  <line x1="53" y1="254" x2="288" y2="254" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="53" y="269" font-size="9.5" fill="#1A1F2B">Embeddings only. Not in the decision</text>
+  <text x="53" y="282" font-size="9.5" fill="#1A1F2B">loop; the policy is rule-based.</text>
+  <line x1="250" y1="208" x2="250" y2="199" stroke="#8A8371" stroke-width="1"/>
+  <path d="M250 192 L246.4 199 L253.6 199 Z" fill="#8A8371"/>
+
+  <!-- ─── durable execution ─────────────────────────────────────────────── -->
+  <text x="40" y="312" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9" letter-spacing="1.6" fill="#8A8371">DURABLE EXECUTION</text>
+  <line x1="40" y1="318" x2="300" y2="318" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="40" y="337" font-size="10.5" fill="#1A1F2B">The episode keeps nothing in the process.</text>
+  <text x="40" y="352" font-size="10.5" fill="#1A1F2B">Each transition is written to episodes</text>
+  <text x="40" y="367" font-size="10.5" fill="#1A1F2B">before the next begins. Kill the worker:</text>
+  <text x="40" y="382" font-size="10.5" fill="#1A1F2B">another resumes from the checkpoint.</text>
+
+  <!-- checkpoint A : recall → decide -->
+  <line x1="380" y1="198" x2="380" y2="414" stroke="#8A8371" stroke-width="1" stroke-dasharray="4 4"/>
+  <path d="M380 422 L376.4 415 L383.6 415 Z" fill="#8A8371"/>
+  <text x="390" y="216" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="8.5" letter-spacing="1.4" fill="#8A8371">CHECKPOINT</text>
+  <text x="390" y="233" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="#1A1F2B">UPDATE episodes</text>
+  <text x="390" y="245" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="#8A8371">SET step = 'decide'</text>
+
+  <!-- checkpoint B : decide → act -->
+  <line x1="580" y1="198" x2="580" y2="414" stroke="#8A8371" stroke-width="1" stroke-dasharray="4 4"/>
+  <path d="M580 422 L576.4 415 L583.6 415 Z" fill="#8A8371"/>
+  <text x="570" y="272" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="8.5" letter-spacing="1.4" fill="#8A8371">CHECKPOINT</text>
+  <text x="570" y="289" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="#1A1F2B">UPDATE episodes</text>
+  <text x="570" y="301" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="#8A8371">SET step = 'act'</text>
+
+  <text x="396" y="331" font-size="10.5" fill="#8A8371">An episode can sit parked</text>
+  <text x="396" y="346" font-size="10.5" fill="#8A8371">between deciding and acting</text>
+  <text x="396" y="361" font-size="10.5" fill="#8A8371">for an unbounded time. That</text>
+  <text x="396" y="376" font-size="10.5" fill="#8A8371">is why act re-validates.</text>
+
+  <!-- ─── 03 the transaction ────────────────────────────────────────────── -->
+  <rect x="618" y="104" width="542" height="596" fill="#FBF9F5" stroke="#1A1F2B" stroke-width="1.8"/>
+  <rect x="623" y="109" width="532" height="586" fill="none" stroke="#1A1F2B" stroke-width="0.6" opacity="0.45"/>
+  <rect x="636" y="97" width="281" height="17" fill="#F4F0E8"/>
+  <text x="642" y="110" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="11" letter-spacing="2" fill="#1A1F2B">03 ONE SERIALIZABLE TRANSACTION</text>
+
+  <text x="642" y="152" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12" fill="#1A1F2B">act</text>
+  <text x="674" y="152" font-size="10.5" fill="#8A8371">resumes from the checkpoint; the decision may be old</text>
+
+  <!-- guard -->
+  <rect x="636" y="168" width="506" height="62" fill="#F4F0E8" stroke="#DDD6C7" stroke-width="1"/>
+  <rect x="636" y="168" width="2.5" height="62" fill="#1A1F2B"/>
+  <text x="650" y="189" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="10" fill="#1A1F2B">SELECT … FROM facts WHERE valid_to IS NULL FOR UPDATE</text>
+  <text x="650" y="206" font-size="10" fill="#1A1F2B">Re-validate against live memory before any money moves.</text>
+  <text x="650" y="221" font-size="10" fill="#8A8371">Destination changed, version bumped, or a freeze: abort, nothing written, back to recall.</text>
+
+  <!-- two writes, one boundary -->
+  <text x="636" y="254" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9" letter-spacing="1.5" fill="#8A8371">THE MEMORY REVISION</text>
+  <line x1="636" y1="260" x2="884" y2="260" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="894" y="254" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9" letter-spacing="1.5" fill="#8A8371">THE BUSINESS WRITE</text>
+  <line x1="894" y1="260" x2="1142" y2="260" stroke="#DDD6C7" stroke-width="1"/>
+
+  <rect x="636" y="270" width="248" height="42" fill="#EDE2DC"/>
+  <rect x="636" y="270" width="2.5" height="42" fill="#8C2F39"/>
+  <text x="649" y="287" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="#8C2F39">UPDATE facts SET valid_to = now()</text>
+  <text x="649" y="302" font-size="9.5" fill="#8A8371">closes the open interval; the row survives</text>
+
+  <rect x="636" y="318" width="248" height="42" fill="#DEE7EA"/>
+  <rect x="636" y="318" width="2.5" height="42" fill="#1F4E5F"/>
+  <text x="649" y="335" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="#1F4E5F">INSERT INTO facts … valid_to NULL</text>
+  <text x="649" y="350" font-size="9.5" fill="#8A8371">opens the next interval, version + 1</text>
+
+  <rect x="894" y="270" width="248" height="42" fill="#F4F0E8" stroke="#DDD6C7" stroke-width="1"/>
+  <rect x="894" y="270" width="2.5" height="42" fill="#1A1F2B"/>
+  <text x="907" y="287" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="#1A1F2B">INSERT INTO ledger …</text>
+  <text x="907" y="302" font-size="9.5" fill="#8A8371">unique idempotency_key refuses a double pay</text>
+
+  <rect x="894" y="318" width="248" height="42" fill="#F4F0E8" stroke="#DDD6C7" stroke-width="1"/>
+  <rect x="894" y="318" width="2.5" height="42" fill="#1A1F2B"/>
+  <text x="907" y="335" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9.5" fill="#1A1F2B">UPDATE accounts SET balance…</text>
+  <text x="907" y="350" font-size="9.5" fill="#8A8371">the money actually moves</text>
+
+  <!-- ─── storage rule (crosses the boundary: the transaction spans both) ── -->
+  <line x1="40" y1="406" x2="1160" y2="406" stroke="#1A1F2B" stroke-width="1.2"/>
+  <rect x="38" y="397" width="332" height="18" fill="#F4F0E8"/>
+  <text x="40" y="410" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9.5" letter-spacing="1.6" fill="#1A1F2B">COCKROACHDB</text>
+  <text x="138" y="410" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9" letter-spacing="1.2" fill="#8A8371">SERIALIZABLE · MVCC · VECTOR INDEX</text>
+
+  <line x1="760" y1="366" x2="760" y2="416" stroke="#1A1F2B" stroke-width="1.1"/>
+  <path d="M760 423 L756.4 416 L763.6 416 Z" fill="#1A1F2B"/>
+  <line x1="1018" y1="366" x2="1018" y2="416" stroke="#1A1F2B" stroke-width="1.1"/>
+  <path d="M1018 423 L1014.4 416 L1021.6 416 Z" fill="#1A1F2B"/>
+
+  <!-- facts -->
+  <rect x="636" y="424" width="248" height="244" fill="#F4F0E8" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="648" y="444" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="#1A1F2B">facts</text>
+  <text x="872" y="444" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="8.5" letter-spacing="1" fill="#8A8371">BITEMPORAL</text>
+  <line x1="648" y1="452" x2="872" y2="452" stroke="#DDD6C7" stroke-width="1"/>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9">
+    <text x="648" y="468" fill="#1A1F2B">entity_id · key · version</text>
+    <text x="872" y="468" text-anchor="end" fill="#8A8371">PK</text>
+    <text x="648" y="482" fill="#1A1F2B">value JSONB · statement STRING</text>
+    <text x="648" y="496" fill="#1A1F2B">valid_from · valid_to</text>
+    <text x="872" y="496" text-anchor="end" fill="#8A8371">← valid time</text>
+    <text x="648" y="510" fill="#1A1F2B">recorded_at</text>
+    <text x="872" y="510" text-anchor="end" fill="#8A8371">← transaction time</text>
+    <text x="648" y="524" fill="#1A1F2B">source · confidence</text>
+    <text x="872" y="524" text-anchor="end" fill="#8A8371">provenance</text>
+    <text x="648" y="538" fill="#1F4E5F">embedding VECTOR(1024)</text>
+    <text x="872" y="538" text-anchor="end" fill="#8A8371">← Titan v2</text>
+  </g>
+  <line x1="648" y1="548" x2="872" y2="548" stroke="#DDD6C7" stroke-width="1"/>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9">
+    <text x="648" y="564" fill="#1A1F2B">facts_one_open UNIQUE (entity_id, key)</text>
+    <text x="658" y="577" fill="#8C2F39">WHERE valid_to IS NULL</text>
+    <text x="648" y="594" fill="#1A1F2B">facts_live_embedding_idx cosine</text>
+    <text x="658" y="607" fill="#1F4E5F">WHERE valid_to IS NULL</text>
+  </g>
+  <text x="648" y="628" font-size="9.5" fill="#1A1F2B">Partial: the index tracks the size of the</text>
+  <text x="648" y="641" font-size="9.5" fill="#1A1F2B">present, not the size of the history.</text>
+  <text x="648" y="657" font-size="9.5" fill="#8A8371">Superseded intervals are retained forever.</text>
+
+  <!-- ledger -->
+  <rect x="894" y="424" width="248" height="118" fill="#F4F0E8" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="906" y="444" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="#1A1F2B">ledger</text>
+  <text x="1130" y="444" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="8.5" letter-spacing="1" fill="#8A8371">MONEY MOVED</text>
+  <line x1="906" y1="452" x2="1130" y2="452" stroke="#DDD6C7" stroke-width="1"/>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9">
+    <text x="906" y="468" fill="#1A1F2B">account_id · amount_cents · kind</text>
+    <text x="906" y="482" fill="#1A1F2B">idempotency_key</text>
+    <text x="1130" y="482" text-anchor="end" fill="#8A8371">UNIQUE</text>
+    <text x="906" y="496" fill="#1A1F2B">episode_id · created_at</text>
+  </g>
+  <text x="906" y="516" font-size="9.5" fill="#1A1F2B">Eight agents race; one row lands.</text>
+  <text x="906" y="529" font-size="9.5" fill="#8A8371">The other seven are refused 23505.</text>
+
+  <!-- accounts -->
+  <rect x="894" y="552" width="248" height="116" fill="#F4F0E8" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="906" y="572" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="#1A1F2B">accounts</text>
+  <text x="1130" y="572" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="8.5" letter-spacing="1" fill="#8A8371">BALANCE</text>
+  <line x1="906" y1="580" x2="1130" y2="580" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="906" y="596" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="#1A1F2B">balance_cents</text>
+  <text x="1130" y="596" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="#8A8371">INT8</text>
+  <text x="906" y="617" font-size="9.5" fill="#1A1F2B">Debited in the same transaction as</text>
+  <text x="906" y="630" font-size="9.5" fill="#1A1F2B">the memory of having debited it.</text>
+  <text x="906" y="650" font-size="9.5" fill="#8A8371">Neither can outlive the other.</text>
+
+  <!-- commit -->
+  <text x="642" y="686" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="10.5" letter-spacing="1.2" fill="#1A1F2B">COMMIT</text>
+  <text x="700" y="686" font-size="10.5" fill="#1A1F2B">belief and money land together, or neither does.</text>
+  <text x="1142" y="686" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9" fill="#8A8371">40001 → retry, backoff + jitter</text>
+
+  <!-- ─── episodes ──────────────────────────────────────────────────────── -->
+  <rect x="320" y="424" width="280" height="216" fill="#FBF9F5" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="332" y="445" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="#1A1F2B">episodes</text>
+  <text x="588" y="445" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="8.5" letter-spacing="1" fill="#8A8371">AGENT STATE</text>
+  <line x1="332" y1="454" x2="588" y2="454" stroke="#DDD6C7" stroke-width="1"/>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9">
+    <text x="332" y="471" fill="#1A1F2B">step</text>
+    <text x="588" y="471" text-anchor="end" fill="#8A8371">recall|decide|act|done</text>
+    <text x="332" y="486" fill="#1A1F2B">status</text>
+    <text x="588" y="486" text-anchor="end" fill="#8A8371">running|done|failed</text>
+    <text x="332" y="501" fill="#1A1F2B">scratch JSONB</text>
+    <text x="588" y="501" text-anchor="end" fill="#8A8371">durable working state</text>
+    <text x="332" y="516" fill="#1A1F2B">outcome · finished_at</text>
+  </g>
+  <line x1="332" y1="528" x2="588" y2="528" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="332" y="546" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9" fill="#1A1F2B">episodes_resumable (status, updated_at)</text>
+  <text x="332" y="568" font-size="9.5" fill="#1A1F2B">The recovery sweep reads this index and</text>
+  <text x="332" y="582" font-size="9.5" fill="#1A1F2B">re-runs anything still marked running.</text>
+  <text x="332" y="602" font-size="9.5" fill="#8A8371">Replay is safe: side effects are idempotent</text>
+  <text x="332" y="616" font-size="9.5" fill="#8A8371">or transactional, so nothing pays twice.</text>
+
+  <!-- ─── tx_journal ────────────────────────────────────────────────────── -->
+  <rect x="40" y="424" width="260" height="216" fill="#FBF9F5" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="52" y="445" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11" fill="#1A1F2B">tx_journal</text>
+  <text x="288" y="445" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="8.5" letter-spacing="1" fill="#8A8371">EVERY ATTEMPT</text>
+  <line x1="52" y1="454" x2="288" y2="454" stroke="#DDD6C7" stroke-width="1"/>
+  <g font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="9">
+    <text x="52" y="471" fill="#1A1F2B">status</text>
+    <text x="288" y="471" text-anchor="end" fill="#8A8371">commit|abort|retry</text>
+    <text x="52" y="486" fill="#1A1F2B">pg_code</text>
+    <text x="288" y="486" text-anchor="end" fill="#8A8371">23505 · 40001</text>
+    <text x="52" y="501" fill="#1A1F2B">latency_ms · episode_id</text>
+  </g>
+  <line x1="52" y1="512" x2="288" y2="512" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="52" y="531" font-size="9.5" fill="#1A1F2B">The aborts are the interesting rows.</text>
+  <text x="52" y="545" font-size="9.5" fill="#8A8371">Seven refusals in the eight-agent race</text>
+  <text x="52" y="559" font-size="9.5" fill="#8A8371">are the system working, not failing.</text>
+  <text x="52" y="582" font-size="9.5" fill="#1A1F2B">p50 commit latency is read from here,</text>
+  <text x="52" y="596" font-size="9.5" fill="#1A1F2B">not estimated: ~20 ms co-located,</text>
+  <text x="52" y="610" font-size="9.5" fill="#8A8371">~650 ms across an ocean.</text>
+
+  <path d="M618 686 L170 686 L170 654" fill="none" stroke="#8A8371" stroke-width="1" stroke-dasharray="4 4"/>
+  <path d="M170 646 L166.4 653 L173.6 653 Z" fill="#8A8371"/>
+  <text x="210" y="681" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="8.5" fill="#8A8371">written after the transaction resolves: commit, abort, or retry</text>
+
+  <!-- ─── footnotes ─────────────────────────────────────────────────────── -->
+  <line x1="40" y1="734" x2="1160" y2="734" stroke="#DDD6C7" stroke-width="1"/>
+  <text x="40" y="754" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9" letter-spacing="1.5" fill="#8A8371">WHY IT CANNOT GO STALE</text>
+  <text x="40" y="772" font-size="10.5" fill="#1A1F2B">A vector store ranks by similarity alone and has nowhere to put valid_to IS NULL. Here validity and</text>
+  <text x="40" y="787" font-size="10.5" fill="#1A1F2B">distance are evaluated by one engine, in one transaction: semantic recall cannot return a closed fact.</text>
+
+  <text x="1160" y="754" text-anchor="end" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"
+        font-size="9" letter-spacing="1.5" fill="#8A8371">VERIFIED, NOT ASSERTED</text>
+  <text x="1160" y="772" text-anchor="end" font-size="10.5" fill="#1A1F2B">npm run verify asserts these claims against a live cluster: the</text>
+  <text x="1160" y="787" text-anchor="end" font-size="10.5" fill="#1A1F2B">invariant, the query plan, the refusals, and the mid-flight resume.</text>
+</svg>

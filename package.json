@@ -1,0 +1,32 @@
+{
+  "name": "tredecim",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build && tsx scripts/check-bundle.ts",
+    "start": "next start",
+    "migrate": "tsx --env-file=.env.local scripts/migrate.ts",
+    "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "verify": "tsx --env-file=.env.local scripts/verify.ts",
+    "schema-check": "tsx --env-file=.env.local scripts/schema-check.ts",
+    "bench": "tsx --env-file=.env.local scripts/bench.ts",
+    "e2e": "tsx scripts/e2e.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-bedrock-runtime": "^3.1111.0",
+    "next": "16.3.1",
+    "pg": "^8.23.0",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/pg": "^8.21.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "playwright": "^1.62.1",
+    "tsx": "^4.23.12",
+    "typescript": "^5"
+  }
+}
