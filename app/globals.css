@@ -1,0 +1,516 @@
+/* TREDECIM — ledger palette.
+   A register never deletes an entry: it rules it through and posts the correction
+   beneath. The interface borrows that, so the mechanism is legible without a caption. */
+
+:root {
+  --paper:  #F4F0E8;
+  --card:   #FBF9F5;
+  --ink:    #1A1F2B;
+  --rule:   #DDD6C7;
+  --muted:  #8A8371;
+
+  --closed: #8C2F39;   /* an interval that has been ruled through */
+  --closed-wash: #EDE2DC;
+  --open:   #1F4E5F;   /* an interval still in force */
+  --open-wash: #DEE7EA;
+
+  --serif: ui-serif, Georgia, "Times New Roman", serif;
+  --mono:  ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sans:  ui-sans-serif, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+button { font: inherit; color: inherit; cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .45; }
+
+.label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .12em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.mono { font-family: var(--mono); }
+
+/* ── frame ─────────────────────────────────────────────────────────────── */
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 20px;
+  border-bottom: 1.5px solid var(--ink);
+  background: var(--card);
+  flex-wrap: wrap;
+}
+
+.wordmark {
+  font-family: var(--serif);
+  font-size: 21px;
+  letter-spacing: .1em;
+}
+
+.tagline {
+  font-family: var(--mono);
+  /* Was 9px in muted grey: legible on a designer's display, not on a projector or a
+     laptop at arm's length. The masthead is the first thing read and the last thing
+     anyone should have to squint at. */
+  font-size: 11px;
+  letter-spacing: .12em;
+  color: #6E6858;
+  padding-left: 11px;
+  border-left: 1px solid var(--rule);
+}
+
+.badge {
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--open);
+  white-space: nowrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 232px minmax(0, 1fr) 252px;
+  min-height: calc(100vh - 118px);
+}
+
+@media (max-width: 1080px) {
+  .grid { grid-template-columns: 1fr; }
+  .col + .col { border-left: none; border-top: 1px solid var(--rule); }
+}
+
+.col { padding: 15px; min-width: 0; }
+.col + .col { border-left: 1px solid var(--rule); }
+
+/* ── numbers that carry the story ─────────────────────────────────────── */
+.figures {
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.figure-value {
+  font-family: var(--serif);
+  font-size: 27px;
+  line-height: 1;
+}
+
+.figure-unit { font-size: 13px; color: var(--muted); }
+
+/* ── the lifeline ──────────────────────────────────────────────────────── */
+.lifeline-frame { display: flex; align-items: stretch; }
+
+.gutter { width: 88px; flex-shrink: 0; }
+
+.gutter-key {
+  height: 28px;
+  display: flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  padding-right: 9px;
+  justify-content: flex-end;
+}
+
+.interval-aside {
+  position: absolute;
+  height: 21px;
+  display: flex;
+  align-items: center;
+  padding: 0 7px;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  pointer-events: none;
+}
+
+.interval-aside.open   { color: var(--open); }
+.interval-aside.closed { color: var(--closed); text-decoration: line-through; }
+
+.lifeline {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  border-left: 1.5px solid var(--ink);
+  border-bottom: 1.5px solid var(--ink);
+  padding: 12px 0 6px;
+  min-height: 190px;
+}
+
+/* Faint vertical rules, like the ruled columns of a ledger page. */
+.lifeline::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    to right, transparent, transparent calc(12.5% - 1px), var(--rule) calc(12.5% - 1px), var(--rule) 12.5%
+  );
+  opacity: .5;
+  pointer-events: none;
+}
+
+.interval {
+  position: absolute;
+  height: 21px;
+  display: flex;
+  align-items: center;
+  padding-left: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  transition: opacity .15s;
+}
+
+.interval.open   { background: var(--open-wash);   border-left: 3px solid var(--open);   color: var(--open); }
+.interval.closed { background: var(--closed-wash); border-left: 3px solid var(--closed); color: var(--closed); text-decoration: line-through; }
+
+.playhead {
+  position: absolute;
+  top: -4px;
+  bottom: -1px;
+  border-left: 1.5px dashed var(--ink);
+  opacity: .6;
+  pointer-events: none;
+}
+
+.playhead-label {
+  position: absolute;
+  top: -15px;
+  transform: translateX(-50%);
+  background: var(--paper);
+  padding: 0 5px;
+  font-family: var(--mono);
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+/* Belt and braces: the label anchors itself inside the track at the extremes, and this
+   keeps any future stray absolute child from giving the whole page a scrollbar. */
+html, body { overflow-x: clip; }
+
+.legend {
+  display: flex;
+  gap: 16px;
+  margin-top: 7px;
+  font-family: var(--mono);
+  font-size: 9px;
+  color: var(--muted);
+  flex-wrap: wrap;
+}
+
+.swatch { display: inline-block; width: 10px; height: 3px; vertical-align: middle; margin-right: 4px; }
+
+/* ── streams ───────────────────────────────────────────────────────────── */
+.entry {
+  border-left: 2px solid var(--rule);
+  padding: 3px 0 3px 9px;
+  margin-bottom: 9px;
+}
+
+.entry.accent-open   { border-left-color: var(--open);   background: var(--open-wash);   padding: 4px 0 4px 9px; }
+.entry.accent-closed { border-left-color: var(--closed); background: var(--closed-wash); padding: 4px 0 4px 9px; }
+
+.entry-time { font-family: var(--mono); font-size: 9.5px; color: var(--muted); }
+.entry-title { font-weight: 600; font-size: 12px; }
+.entry-note { font-size: 11px; color: var(--muted); }
+
+.journal-row {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  line-height: 1.85;
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+}
+
+.journal-row.abort { background: var(--closed-wash); margin: 1px -5px; padding: 1px 5px; }
+
+/* ── controls ──────────────────────────────────────────────────────────── */
+.action {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 8px 10px;
+  margin-bottom: 7px;
+  transition: border-color .12s, background .12s;
+}
+
+.action:hover:not(:disabled) { border-color: var(--open); background: var(--open-wash); }
+.action-title { font-weight: 600; font-size: 12px; }
+.action-claim { font-size: 10.5px; color: var(--muted); line-height: 1.45; margin-top: 2px; }
+
+.footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  /* Extra left inset keeps the dev-mode overlay off the temporal query. */
+  padding: 11px 20px 11px 62px;
+  border-top: 1.5px solid var(--ink);
+  background: var(--card);
+  flex-wrap: wrap;
+}
+
+.scrubber { flex: 1; min-width: 200px; accent-color: var(--closed); }
+
+/* ── memory reading ────────────────────────────────────────────────────── */
+.reading {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.reading th {
+  text-align: left;
+  font-weight: 400;
+  font-size: 9px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 10px 6px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.reading td {
+  padding: 5px 10px 5px 0;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: top;
+}
+
+.reading tr.is-closed td:nth-child(-n+2) {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.footnote {
+  font-size: 11.5px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 88ch;
+  margin: 12px 0 0;
+}
+
+.answer-panel { position: relative; margin-top: 14px; }
+
+.answer-close {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  background: none;
+  border: none;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--muted);
+  padding: 2px 5px;
+  z-index: 1;
+}
+
+.answer-close:hover { color: var(--closed); }
+
+.repeat {
+  font-size: 9px;
+  color: var(--closed);
+  background: var(--closed-wash);
+  border-radius: 8px;
+  padding: 0 5px;
+}
+
+.answer {
+  font-family: var(--mono);
+  font-size: 11px;
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 9px 11px;
+  margin-top: 11px;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── first contact ─────────────────────────────────────────────────────── */
+/* The console shows a lot at once. Without an entry point a reader who does not already
+   know what bitemporal memory is has nowhere to start, so the opening panel takes the
+   centre column until they choose to leave it. */
+
+.welcome, .tour {
+  background: var(--card);
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--closed);
+  border-radius: 3px;
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  max-width: 74ch;
+}
+
+.welcome h1 {
+  font-family: var(--serif);
+  font-size: 29px;
+  font-weight: 400;
+  line-height: 1.25;
+  margin: 8px 0 16px;
+}
+
+.tour h2 {
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 400;
+  margin: 10px 0 12px;
+}
+
+.welcome p, .tour p {
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 0 0 13px;
+}
+
+.cta {
+  background: var(--ink);
+  color: var(--paper);
+  border: none;
+  border-radius: 3px;
+  padding: 9px 18px;
+  font-size: 13.5px;
+  font-weight: 600;
+  margin-top: 6px;
+  transition: background .12s;
+}
+
+.cta:hover:not(:disabled) { background: var(--closed); }
+
+.link-quiet {
+  background: none;
+  border: none;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: #6E6858;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 2px 0;
+}
+
+a.link-quiet { text-decoration: underline; text-underline-offset: 3px; }
+.link-quiet:hover { color: var(--closed); }
+
+.tour-progress { display: flex; align-items: center; gap: 5px; }
+
+.pip {
+  width: 22px;
+  height: 3px;
+  background: var(--rule);
+  border-radius: 2px;
+}
+
+.pip.on { background: var(--closed); }
+
+/* ── the thirteen ──────────────────────────────────────────────────────── */
+.relations {
+  position: relative;
+  background: var(--card);
+  border-bottom: 1px solid var(--rule);
+  padding: 18px 22px;
+  font-size: 13px;
+}
+
+.relation-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(158px, 1fr));
+  gap: 4px 18px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+
+.relation-n { color: var(--muted); }
+
+/* The seven base relations, then the six converses. */
+.relation:nth-child(-n+7) { color: var(--ink); }
+.relation:nth-child(n+8)  { color: var(--muted); }
+
+.divergence { padding: 12px 14px; }
+.reading tr.diverges { background: var(--closed-wash); }
+
+/* ── focus ─────────────────────────────────────────────────────────────── */
+/* Guiding attention is subtraction. During a tour step, everything the step is not
+   talking about recedes far enough to stop competing, without disappearing — a reader
+   who wants to look anyway still can. */
+.dimmed {
+  opacity: .22;
+  filter: saturate(.25);
+  transition: opacity .35s ease, filter .35s ease;
+  pointer-events: none;
+}
+
+.col, .figures, .lifeline-frame {
+  transition: opacity .35s ease, filter .35s ease;
+}
+
+/* ── motion ────────────────────────────────────────────────────────────── */
+/* The opening panel depends on no data, so it should not wait behind the first API
+   round trip. Fading it in makes its immediate arrival feel deliberate. */
+.welcome-enter { animation: rise .45s ease both; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* An interval closing is the single most important thing this interface shows, and it
+   used to happen between two frames. Half a second is enough for the eye to catch it. */
+.interval, .interval-aside {
+  animation: settle .5s ease both;
+}
+
+@keyframes settle {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* A scenario writing to a cluster on another continent takes seconds. Without a sign of
+   life, a reader concludes the page is stuck. */
+.working {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 7px 20px;
+  background: var(--open-wash);
+  border-bottom: 1px solid var(--rule);
+}
+
+.working-bar {
+  width: 74px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--rule) 30%, var(--closed) 50%, var(--rule) 70%);
+  background-size: 220% 100%;
+  animation: sweep 1.1s linear infinite;
+}
+
+@keyframes sweep {
+  from { background-position: 140% 0; }
+  to   { background-position: -40% 0; }
+}
+
+/* Anyone who has asked not to see motion should not be made to. */
+@media (prefers-reduced-motion: reduce) {
+  .welcome-enter, .interval, .interval-aside, .working-bar { animation: none; }
+}
