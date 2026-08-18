@@ -8,6 +8,7 @@
     "start": "next start",
     "migrate": "tsx --env-file=.env.local scripts/migrate.ts",
     "seed": "tsx --env-file=.env.local scripts/seed.ts",
+    "reembed": "tsx --env-file=.env.local scripts/reembed.ts",
     "verify": "tsx --env-file=.env.local scripts/verify.ts",
     "schema-check": "tsx --env-file=.env.local scripts/schema-check.ts",
     "bench": "tsx --env-file=.env.local scripts/bench.ts",

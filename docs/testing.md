@@ -58,6 +58,13 @@ do with the index.
 Cleans up after itself under its own entity namespace and asserts at startup that its range
 cannot overlap the demo account.
 
+## `npm run reembed`
+
+Not a test, but it belongs next to them. Rewrites every embedding with the currently
+configured provider. Switching provider is not a matter of changing an env var: vectors
+from different models occupy different spaces, and comparing across them yields a number
+with no meaning.
+
 ## What none of these cover
 
 - **Bedrock failure modes beyond the fallback.** The embedding provider falls back to a
