@@ -46,8 +46,6 @@ next-env.d.ts
 /*.md
 !/README.md
 
-# Submission working notes, deliberately not published
-.submission/
 
 # Ad-hoc probe scripts
 /*.mjs

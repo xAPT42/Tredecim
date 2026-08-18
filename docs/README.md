@@ -34,6 +34,11 @@ because they record the alternatives that were rejected, which the code cannot s
 | [0005](decisions/0005-record-then-refuse.md) | Record a hostile fact, refuse to act on it |
 | [0006](decisions/0006-durable-execution-over-in-process-state.md) | Durable execution rather than in-process agent state |
 
+## Screenshots
+
+`screenshots/` holds captures of the running console and the diagram, for anyone reading
+this without a browser open.
+
 ## Skills
 
 | | |
