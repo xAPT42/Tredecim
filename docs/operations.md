@@ -84,7 +84,7 @@ blocks writes, and the RU limit disables the cluster until the next billing cycl
 npm run migrate       # apply lib/schema.sql, idempotently
 npm run seed          # a small backdated history for the console
 npm run schema-check  # confirm the deployed schema matches what the code depends on
-npm run verify        # 49 assertions against the live cluster
+npm run verify        # 64 assertions against the live cluster
 ```
 
 `schema-check` is worth running after any control-plane change. See [mcp.md](mcp.md) for

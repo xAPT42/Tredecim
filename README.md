@@ -37,7 +37,7 @@ gap, the decision is re-checked under `FOR UPDATE` before money moves.
 **Provenance enforced at the point of payment.** A hostile revision is *recorded* — refusing
 to write destroys the evidence — and refused when it would move money.
 
-**49 assertions against a live cluster, including the query plan.**
+**64 assertions against a live cluster, including the query plan.**
 
 </td></tr>
 </table>
@@ -288,7 +288,7 @@ cp .env.example .env.local          # add your CockroachDB connection string
 npm run migrate && npm run verify
 ```
 
-**49 assertions across ten sections, and the query plan is one of them.** That last part
+**64 assertions across eleven sections, and the query plan is one of them.** That last part
 matters more than the count. Two of the hardest bugs in this project were an index that was
 built, listed by `SHOW INDEXES`, and never chosen by the planner — a failure that is
 invisible to every test that only checks results. `verify` reads `EXPLAIN` and fails if the
@@ -306,6 +306,7 @@ live recall path falls back to a scan.
 | 8 | The planner uses the partial vector index, with the right operator class |
 | 9 | Twelve rapid concurrent revisions all land, none degenerate |
 | 10 | Provenance is enforced where money moves, not merely recorded |
+| 11 | Money and the memory of it commit together, or not at all |
 
 `npm run e2e` drives a real browser against the deployed console and checks the whole
 journey: every scenario runs, the lifeline shows both sides of a revision, the temporal
